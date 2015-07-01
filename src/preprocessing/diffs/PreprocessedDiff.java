@@ -4,8 +4,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
-import preprocessing.diffs.Changes;
-
 /**
  * PreprocessedDiff is designated to keep all modifications within its list.
  * The particular changes and necessary information is kept within the Changes

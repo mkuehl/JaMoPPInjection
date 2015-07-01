@@ -8,9 +8,9 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import diffs.Change;
-import diffs.Changes;
-import diffs.PreprocessedDiff;
+import preprocessing.diffs.Change;
+import preprocessing.diffs.Changes;
+import preprocessing.diffs.PreprocessedDiff;
 
 public class DiffPreprocessor {
 

@@ -10,6 +10,7 @@ import java.util.Scanner;
 public class GitConnectorCmdL {
 	
 	private StringBuilder diff;
+	private StringBuilder codeBase;
 
 	public GitConnectorCmdL(String usrnam, String pwd) {
 	}
@@ -27,7 +28,8 @@ public class GitConnectorCmdL {
 //		localPath.delete();
 
 		System.setProperty("user.dir", pathToDir);
-		System.out.println(System.getProperty("user.dir") + "\t" + pathToDir);
+//		System.out.println(System.getProperty("user.dir") + "\t" + pathToDir);
+		@SuppressWarnings("unused")
 		Process p = null;
 		String[] cloneCommand = {"E:\\Program Files (x86)\\Git\\bin\\git", "clone", uri, pathToDir};
 		ProcessBuilder builder = new ProcessBuilder(cloneCommand);
@@ -42,10 +44,45 @@ public class GitConnectorCmdL {
 			e.printStackTrace();
 		}
 			
-		@SuppressWarnings("resource")
-		Scanner s = new Scanner(p.getErrorStream());
-		while(s.hasNext()) {
-			System.out.println(s.nextLine());
+//		@SuppressWarnings("resource")
+//		Scanner s = new Scanner(p.getErrorStream());
+//		while(s.hasNext()) {
+//			System.out.println(s.nextLine());
+//		}
+	}
+	
+	/**
+	 * Gets all commits from the first up to the specified. Just the first with the specified latest commits are 
+	 * compared.
+	 * @param latestCommitHash - either hash or HEAD~i, where i is the number of steps to take back from HEAD
+	 */
+	public void extractCodeBase(String pathToDir, String latestCommitHash) {
+		Process p = null;
+		File repoDirectory = new File(pathToDir);
+		String initialCommitHash = "";
+		String[] revlistCommand = {"E:\\Program Files (x86)\\Git\\bin\\git.exe", "rev-list", "--max-parents=0", "HEAD"};
+		String[] diffCommand = {"E:\\Program Files (x86)\\Git\\bin\\git.exe", "diff", "", "PrintClass.java"};
+		ProcessBuilder pb = new ProcessBuilder(revlistCommand);
+		try {
+			pb.directory(repoDirectory);
+			p = pb.start();
+			@SuppressWarnings("resource")
+			Scanner s = new Scanner(p.getInputStream());
+			initialCommitHash = s.next();
+			
+			// diff
+			diffCommand[2] = initialCommitHash + ".." + latestCommitHash;
+			pb = new ProcessBuilder(diffCommand);
+			pb.directory(repoDirectory);
+			p = pb.start();
+			s = new Scanner(p.getInputStream());
+			codeBase = new StringBuilder("");
+			while (s.hasNextLine()) {
+//				System.out.println(s.nextLine());
+				codeBase.append(s.nextLine() + "\n");
+			}
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
 		}
 	}
 	
@@ -60,11 +97,13 @@ public class GitConnectorCmdL {
 		Process p = null;
 //		String[] command = {"cmd", "/c", "dir", "/a:-d", pathToDir};
 		String range = "HEAD~" + startNumberOfCommitFromHEAD + "..HEAD~" + endNumberOfCommitFromHEAD;
+		// set git programm location, command, options
 		String[] logCommand = {"E:\\Program Files (x86)\\Git\\bin\\git.exe", "log", "-p", "--pretty=email", range, "PrintClass.java"};
-		for (String l : logCommand) {
-			System.out.println(l);
-		}
+//		for (String l : logCommand) {
+//			System.out.println(l);
+//		}
 		ProcessBuilder pb = new ProcessBuilder(logCommand);
+		// create a log file for the log command
 		new File("E:\\loglog.txt").delete();
 		File f = new File("E:\\loglog.txt");
 		
@@ -77,8 +116,9 @@ public class GitConnectorCmdL {
 //			}
 //			pb = new ProcessBuilder(logCommand);
 //			pb.redirectOutput(Redirect.appendTo(f));
+			// set the path of the local git repo on which the command shall be performed.
 			pb.directory(new File(pathToDir));
-			System.out.println(pb.directory().getPath());
+//			System.out.println(pb.directory().getPath());
 			p = pb.start();
 			@SuppressWarnings("resource")
 			Scanner s = new Scanner(p.getInputStream());
@@ -104,5 +144,9 @@ public class GitConnectorCmdL {
 	
 	public String getDiff() {
 		return diff.toString();
+	}
+	
+	public String getCodeBase() {
+		return codeBase.toString();
 	}
 }

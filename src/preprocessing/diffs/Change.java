@@ -7,6 +7,8 @@ package preprocessing.diffs;
  */
 public class Change {
 
+	// contains the class/file name
+	private String classFile;
 	// Marks the beginning line of the respective changes
 	private int beginningLine;
 	// Flags if the respective change is a modification, removal or an addition
@@ -24,6 +26,14 @@ public class Change {
 		addRem = p_addRem;
 		beginningLine = p_beginningLine;
 		changes = p_changes;
+	}
+	
+	public void setClassFile(String p_classFile) {
+		classFile = p_classFile;
+	}
+	
+	public String getClassFile() {
+		return classFile;
 	}
 	
 	/**

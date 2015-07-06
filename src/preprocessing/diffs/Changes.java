@@ -11,24 +11,24 @@ import java.util.NoSuchElementException;
  */
 public class Changes implements Iterable<Change>, Iterator<Change> {
 
-	// contains the class/file name
-	private String classFile;
+	private String commitHash;
 	private LinkedList<Change> changesList;
 	
 	// iterator related
 	int index;
 	
 	public Changes() {
+		commitHash = "";
 		changesList = new LinkedList<Change>();
 		index = 0;
 	}
 	
-	public void setClassFile(String p_classFile) {
-		classFile = p_classFile;
+	public void setCommitHash(String p_commitHash) {
+		commitHash = p_commitHash;
 	}
 	
-	public String getClassFile() {
-		return classFile;
+	public String getCommitHash() {
+		return commitHash;
 	}
 	
 	public void add(Change change) {
@@ -68,7 +68,7 @@ public class Changes implements Iterable<Change>, Iterator<Change> {
 	}
 	
 	public boolean hasPrevious() {
-		if (index > 0) {
+		if (index > -1) {
 			return true;
 		}
 		return false;
@@ -92,5 +92,9 @@ public class Changes implements Iterable<Change>, Iterator<Change> {
 	@Override
 	public void remove() {
 		throw new UnsupportedOperationException();
+	}
+	
+	public void clear() {
+		changesList.clear();
 	}
 }

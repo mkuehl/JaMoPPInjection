@@ -76,4 +76,9 @@ public class PreprocessedDiff implements Iterable<Changes>, Iterator<Changes> {
 	public Iterator<Changes> iterator() {
 		return this;
 	}
+	
+	public void clear() {
+		modificationList = new LinkedList<Changes>();
+		index = 0;
+	}
 }

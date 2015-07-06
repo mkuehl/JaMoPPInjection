@@ -35,6 +35,8 @@ public class DiffPreprocessor {
 	
 	public void setInput(String p_input) {
 		input = p_input;
+		prepDiff.clear();
+		changes.clear();
 	}
 	
 	public String getInput() {
@@ -49,7 +51,7 @@ public class DiffPreprocessor {
 	 * Cleans the input from all not necessary meta information. Thus, just information about 
 	 * starting line and number of (affected) lines is retained 
 	 */
-	public void cleanInput() {
+	public void clearInput() {
 		if (input != null && !input.isEmpty()) {
 			// first line says, that lines start with one expression within the parenthesis followed by an optional : and a mandatory whitespace
 			String regex = "((From|Date):?\\s" //removed Subject from inside parentheses
@@ -73,7 +75,7 @@ public class DiffPreprocessor {
 					+ "((new|modified|deleted)\\s(file)\\s(mode)\\s[\\d]{6}))";
 			Pattern p = Pattern.compile(regex);
 			Matcher m = p.matcher(input);
-			System.out.println("Input: " + input);
+//			System.out.println("Input: " + input);
 			input = m.replaceAll("");
 		}
 	}

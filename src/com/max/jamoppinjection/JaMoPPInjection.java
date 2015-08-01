@@ -29,6 +29,7 @@ import org.emftext.language.java.resource.java.util.JavaResourceUtil;
 import preprocessing.diffpreprocessor.DiffPreprocessor;
 import preprocessing.diffs.Change;
 import preprocessing.diffs.Changes;
+import preprocessing.diffs.PreprocessedDiff;
 import preprocessing.gitconnector.GitConnectorCmdL;
 import deltatransformation.DeltaJCreator;
 
@@ -45,10 +46,11 @@ public class JaMoPPInjection {
 		
 		// create code base to which later changes shall be applied
 		// TODO adjust name and path to your flavor and system
-		gcl.extractCodeBase("E:\\programmaticallyCreatedGitRepo", "HEAD~12");
+		gcl.getRepo("E:\\programmaticallyCreatedGitRepo\\", "https://github.com/mkuehl/TestRepo.git");
+		gcl.extractCodeBase("E:\\programmaticallyCreatedGitRepo\\", "HEAD~3", "Printer.java");
 		diffPre.setInput(gcl.getCodeBase());
-		diffPre.cleanInput();
-		diffPre.separateChanges();
+//		diffPre.separateChanges();
+		diffPre.preprocessCodeBase();
 
 		// for code base
 		Changes codeBases = diffPre.getPrepDiff().next();
@@ -64,7 +66,7 @@ public class JaMoPPInjection {
 		DeltaJUnit dju = djc.createDeltaJUnit();
 		Delta d = djc.createNewDelta(dju, "coredelta");
 		
-		djc.addJavaUnit(d, abstractSyntaxTreeRoot, (byte) 1);
+		djc.addJavaUnit(d, abstractSyntaxTreeRoot, "", "", (byte) 1);
 		
 		// TODO adjust name and path to your flavor and system
 		djc.createDeltaFile("PrintClassCoreDelta", "E:\\DeltaJ-workspace\\PrintClassDelta", d);
@@ -83,7 +85,7 @@ public class JaMoPPInjection {
 				List<Member> members = classifier.getMembers();
 				List<String> comments = classifier.getComments();
 
-				if (!members.get(2).getComments().isEmpty()) {
+				if (members != null && members.size() > 2 && !members.get(2).getComments().isEmpty()) {
 					System.out.println(members.get(2).getComments().get(0));
 				}
 				
@@ -95,46 +97,51 @@ public class JaMoPPInjection {
 				printString(comments);
 
 //				diffPre.resetPrepDiff();
-				gcl.executeDiff("E:\\programmaticallyCreatedGitRepo", 10, 0);
+				gcl.executeDiff("E:\\programmaticallyCreatedGitRepo", 3, 0, "Printer.java");
 				diffPre.setInput(gcl.getDiff());
-				System.out.println();
-				diffPre.cleanInput();
+//				System.out.println("INPUT: " + diffPre.getInput());
 				diffPre.separateChanges();
 				
-				Changes changes = diffPre.getPrepDiff().next();
-				
-				// go through changes from last to first
-				changes.setToLast();
-				while (changes.hasPrevious()) {
-					Change change = changes.previous();
-					// TODO just for units smaller than class and not import or package statements
-					EObject abstractSyntaxTreeRoot2 = JavaResourceUtil.getResourceContent(
-							wrapCodeWithClass(change.getChanges()));
-					
-					/*
-					 * TODO compilation is mandatory but then the changes needn't to be applied to main compilation
-					 * unit. Changes have to be parsed to ensure correctness and then have to be handed over to 
-					 * DeltaJCreator for creating deltas. 
-					 */
-					CompilationUnit cu2 = null;
-					if (abstractSyntaxTreeRoot2 instanceof CompilationUnit) {
-						cu2 = (CompilationUnit) abstractSyntaxTreeRoot2;						
-						List<ConcreteClassifier> classifiers2 = cu2.getClassifiers();
-						
-						for (ConcreteClassifier classifier2 : classifiers2) {
-							List<Member> members2 = classifier2.getMembers();
-							/*
-							 * important for not applying false related addRem flags to previous handled members, 
-							 * e.g. if an empty line shall be removed, the last added member is removed instead.
-							 */
-							if (!members2.isEmpty()) {
-								if (change.getAddRem() > 0) {
-									addMembers(members, members2);
-								} else if (change.getAddRem() < 0) {
-									removeMembers(members, members2);
-								}
-							}							
+				ChangesValidator cVal = new ChangesValidator();
+				// TODO For testing only
+				cVal.setMembers(members);
+				PreprocessedDiff prepDiff = diffPre.getPrepDiff();
+				prepDiff.setToLast();
+				int noPrev = prepDiff.size(),
+					j = 1;
+				while (prepDiff.hasPrevious() || noPrev > 0) {
+					Changes changes = prepDiff.getChanges();
+					Delta tempDelta = djc.createNewDelta(dju, "Delta" + j++);
+					if (changes.size() > 0) {
+						changes.setToFirst();
+						// TODO why changes are not returned correctly??????
+						//TODO
+						//TODO
+						//TODO
+						for (Change c : changes) {
+							String packageName,
+							className;
+							System.out.println(c.getClassName());
+							packageName = c.getClassName().substring(0, c.getClassName().lastIndexOf("."));
+							className = c.getClassName().substring(c.getClassName().lastIndexOf(".")+1, 
+									c.getClassName().length());
+							System.out.println("Changes within loop of JaMoPPInjection: " + c.getChanges());
+							djc.addJavaUnit(tempDelta, cVal.validateChange(c), packageName, className, 
+									c.getAddRem());
 						}
+//						Change change = changes.getChange();
+//						String packageName,
+//							   className;
+//						System.out.println(change.getClassName());
+//						packageName = change.getClassName().substring(0, change.getClassName().lastIndexOf(".")-1);
+//						className = change.getClassName().substring(change.getClassName().lastIndexOf("."), 
+//								change.getClassName().length());
+//						System.out.println("Changes within loop of JaMoPPInjection: " + change.getChanges());
+//						djc.addJavaUnit(tempDelta, cVal.validateChange(change), packageName, className, 
+//								change.getAddRem());
+						djc.createDeltaFile("PrintClassCoreDelta", "E:\\DeltaJ-workspace\\PrintClassDelta", tempDelta);
+						prepDiff.previous();
+						noPrev--;
 					}
 				}
 				
@@ -142,25 +149,11 @@ public class JaMoPPInjection {
 				System.out.println("modified code:");
 				printMembers(members);
 				printString(comments);
-			}
-			System.out.println("Members added " + rounds + " times");
-			
+			}			
 
 			System.out.println(JavaResourceUtil.getText(abstractSyntaxTreeRoot));
 			
 		}
-	}
-	
-	private static String wrapCodeWithClass(String code) {
-		String firstPart;
-		try {
-			firstPart = code.substring(0, code.indexOf(";", code.lastIndexOf("import")));
-			code = code.substring(code.lastIndexOf("import")+1);
-		} catch (java.lang.StringIndexOutOfBoundsException sioobe) {
-			firstPart = "";
-		}
-		code = firstPart + "public class {\n\n" + code + "\n}";
-		return code;
 	}
 	
 	private static void printMembers(List<Member> members) {
@@ -194,54 +187,6 @@ public class JaMoPPInjection {
 		for (String s : texts) {
 			System.out.println("Comment: " + s);
 		}
-	}
-
-	static int rounds = 0;
-	/**
-	 * Adds one member to a list of members. Supposed to be the memberlist of the main compilation unit.
-	 * @param oldMembers - list of members contained in the main compilation unit
-	 * @param newMember - 
-	 */
-	private static void addMembers(List<Member> oldMembers, List<Member> newMembers) {
-		rounds++;
-		while (newMembers.size() > 0) {
-			Member newMember = newMembers.get(0);
-			if (newMember instanceof Field) {
-				oldMembers.add(newMember);
-			}
-
-			if (newMember instanceof Constructor) {
-				oldMembers.add(newMember);
-			}
-
-			if (newMember instanceof Method) {
-				oldMembers.add(newMember);
-			}
-		}		
-	}
-	
-	/**
-	 * Removes the members listed in membersToBeRemoved from oldMembers which come from the main compilation unit.
-	 * @param oldMembers
-	 * @param membersToBeRemoved
-	 */
-	private static void removeMembers(List<Member> oldMembers, List<Member> membersToBeRemoved) {
-		for (Member memberToBeRemoved : membersToBeRemoved) {
-			if (!oldMembers.contains(memberToBeRemoved)) {
-				continue;
-			}
-			if (memberToBeRemoved instanceof Field) {
-				oldMembers.remove(memberToBeRemoved);
-			}
-
-			if (memberToBeRemoved instanceof Constructor) {
-				oldMembers.remove(memberToBeRemoved);
-			}
-
-			if (memberToBeRemoved instanceof Method) {
-				oldMembers.remove(memberToBeRemoved);
-			}
-		}	
 	}
 	
 	// Your method

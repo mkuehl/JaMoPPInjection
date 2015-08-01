@@ -7,6 +7,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import org.deltaj.deltaJ.AddsClassBodyMemberDeclaration;
+import org.deltaj.deltaJ.AddsMember;
 import org.deltaj.deltaJ.AddsUnit;
 import org.deltaj.deltaJ.Delta;
 import org.deltaj.deltaJ.DeltaAction;
@@ -14,17 +16,15 @@ import org.deltaj.deltaJ.DeltaJFactory;
 import org.deltaj.deltaJ.DeltaJUnit;
 import org.deltaj.deltaJ.JavaCompilationUnit;
 import org.deltaj.deltaJ.ModifiesAction;
+import org.deltaj.deltaJ.ModifiesPackage;
 import org.deltaj.deltaJ.ModifiesUnit;
+import org.deltaj.deltaJ.PackageDeclaration;
 import org.deltaj.deltaJ.Source;
 import org.deltaj.deltaJ.Sources;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.emftext.language.java.classifiers.ConcreteClassifier;
 import org.emftext.language.java.containers.CompilationUnit;
-import org.emftext.language.java.imports.Import;
-import org.emftext.language.java.members.Field;
-import org.emftext.language.java.members.Method;
-import org.emftext.language.java.parameters.Parameter;
 import org.emftext.language.java.resource.java.util.JavaResourceUtil;
 
 public class DeltaJCreator {
@@ -86,7 +86,8 @@ public class DeltaJCreator {
 	 * 			  a byte that indicates addition, modification or removal. Positive
 	 * 			  numbers mean addition, negative removal and zero modification. 
 	 */
-	public void addJavaUnit(Delta parent, EObject jamoppParsedClass, byte addRem) {
+	public void addJavaUnit(Delta parent, EObject jamoppParsedClass, String packageName, String className, 
+			byte addRem) {
 		// Trigger transformation of JaMoPP to DeltaJ AST
 		JavaCompilationUnit jcu = fancyJamoppToDeltaJTransformation(jamoppParsedClass);
 		CompilationUnit cu = (CompilationUnit) jamoppParsedClass;
@@ -97,7 +98,7 @@ public class DeltaJCreator {
 			// Creating AddsUnit node.
 			addJavaAddsUnit(parent, jcu);
 		} else if (addRem == 0) {
-			 
+			 addJavaModifiesUnit(parent, packageName, className, jcu);
 		} else {
 			
 		}
@@ -108,13 +109,38 @@ public class DeltaJCreator {
 		
 		// Adding the child node to the adds unit
 		au.setUnit(deltaCode);
-
+		
 		// Adding the adds unit node as child to the delta node
 		parent.getDeltaActions().add(au);
 
 		// Nothing will be returned because we don't need to add anything here.
 	}
 	
+	private void addJavaModifiesUnit(Delta parent, String packageName, String className, JavaCompilationUnit deltaCode) {
+		ModifiesUnit mu = factory.createModifiesUnit();
+		ModifiesAction decl = factory.createAddsClassBodyMemberDeclaration();
+//		Sources ss = factory.createSources();
+//		Source s = factory.createSource();
+//		System.out.println(deltaCode.toString());
+//		s.setDelta(deltaCode.toString());
+//		ss.getSources().add(s);
+		for (Source s : deltaCode.getSource().getSources()) {
+			System.out.println(s.getDelta());
+		}
+//		decl.setSource(deltaCode.getSource());
+//		AddsMember am = factory.createAddsMember();
+//		am = decl;
+//		ModifiesAction ma = factory.createModifiesAction();
+//		ma = am;
+		ModifiesPackage mp = factory.createModifiesPackage();
+		PackageDeclaration md = factory.createPackageDeclaration();
+		md.setName(packageName);
+		mp.setPackage(md);
+		mu.setModifiesPackage(mp);
+		mu.setName(className);
+		mu.getModifiesClassMembers().add(decl);
+		parent.getDeltaActions().add(mu);
+	}
 	/*
 	 *  TODO create methods for modification and removal of elements. Works entirely different than AddsUnit, because
 	 *  no unit is set but smaller actions for modifications have to be set. Do not know yet, how to apply removals!!
@@ -148,34 +174,38 @@ public class DeltaJCreator {
 //	}
 	
 	private JavaCompilationUnit fancyJamoppToDeltaJTransformation(EObject jamoppAST) {
-		System.out.println(JavaResourceUtil.getText(jamoppAST));
+		if (jamoppAST == null) {
+			System.out.println("...............AST IST NULL..................");
+			return null;
+		}
+		System.out.println("Given AST: " + JavaResourceUtil.getText(jamoppAST) + " END Given AST");
 		CompilationUnit cu = (CompilationUnit) jamoppAST;
-		System.out.println(cu.toString());
-		for (String ns : cu.getNamespaces()) {
-			System.out.println("Namespace: " + ns);
-		}
-		for (Import i : cu.getImports()) {
-			for (ConcreteClassifier c : i.getImportedClassifiers()) {
-				System.out.println(c.getName());
-			}
-		}
-		for (ConcreteClassifier c : cu.getClassifiers()) {
-			EList<Field> fields = c.getFields();
-			EList<Method> methods = c.getMethods();
-			for (Field f : fields) {
-				System.out.println("Field: " + f.getName());
-			}
-			for (Method m : methods) {
-				System.out.println("Method: " + m.getName());
-				for (Parameter p : m.getParameters()) {
-					System.out.println("Param: " + p.getClass().getSimpleName() + " " + p.getName());
-				}
-			}
-		}
+		System.out.println("CU: " + cu.toString() + " END CU");
+//		for (String ns : cu.getNamespaces()) {
+//			System.out.println("Namespace: " + ns);
+//		}
+//		for (Import i : cu.getImports()) {
+//			for (ConcreteClassifier c : i.getImportedClassifiers()) {
+//				System.out.println(c.getName());
+//			}
+//		}
+//		for (ConcreteClassifier c : cu.getClassifiers()) {
+//			EList<Field> fields = c.getFields();
+//			EList<Method> methods = c.getMethods();
+//			for (Field f : fields) {
+//				System.out.println("Field: " + f.getName());
+//			}
+//			for (Method m : methods) {
+//				System.out.println("Method: " + m.getName());
+//				for (Parameter p : m.getParameters()) {
+//					System.out.println("Param: " + p.getClass().getSimpleName() + " " + p.getName());
+//				}
+//			}
+//		}
 		JavaCompilationUnit jcu = factory.createJavaCompilationUnit();
 		Sources ss = factory.createSources();
 		Source s = factory.createSource();
-		s.setDelta(JavaResourceUtil.getText(jamoppAST));
+		s.setDelta(JavaResourceUtil.getText(jamoppAST).trim());
 		ss.getSources().add(s);
 		jcu.setSource(ss);
 		for (Source ts : jcu.getSource().getSources()) {
@@ -200,7 +230,7 @@ public class DeltaJCreator {
 			// without getParentFile() the path is created with the designated file as directory.
 			f.getParentFile().mkdirs();
 //			System.setProperty("user.dir", path);
-			BufferedWriter out = new BufferedWriter(new FileWriter(f, false));
+			BufferedWriter out = new BufferedWriter(new FileWriter(f, true));
 			String change = "";
 			out.append("delta " + d.getName() + " {\n");
 			for (DeltaAction da : d.getDeltaActions()) {

@@ -1,14 +1,14 @@
 package com.max.jamoppinjection;
 
 
-import preprocessing.gitconnector.GitConnectorCmdL;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.deltaj.deltaJ.Delta;
+import org.deltaj.deltaJ.DeltaJUnit;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
@@ -27,52 +27,56 @@ import org.emftext.language.java.modifiers.Public;
 import org.emftext.language.java.resource.java.util.JavaResourceUtil;
 
 import preprocessing.diffpreprocessor.DiffPreprocessor;
+import preprocessing.diffs.Change;
 import preprocessing.diffs.Changes;
+import preprocessing.diffs.PreprocessedDiff;
+import preprocessing.gitconnector.GitConnectorCmdL;
+import deltatransformation.DeltaJCreator;
 
 public class JaMoPPInjection {
+	
 	public static void run() {
 		//Get (valid) Java source code from somewhere.
-		String code = "";
+		String code = "";		
+
+		// Connector to git to clone, extract code base and diffs.
+		GitConnectorCmdL gcl = new GitConnectorCmdL("", "");
+		// cleans the code base and diffs and creates a memory table for knowing lines of methods and fields.
+		DiffPreprocessor diffPre = new DiffPreprocessor();
 		
-		code += "package myExample;\n";
-		code += "\n";
-		code += "public class PrintClass {\n";
-		code += "\n";
-		/*
-		 *  if the two variables below the multiline comment (MLC) are not commented out, only the latter comment is 
-		 *  shown at the end, when everything will get printed. The comment list is unmodifiable and thus there has 
-		 *  to be another way to add comments. 
-		 *  It seems that the comments are added to the following member. E.g. the MLC is part of numberToPrint.
-		 */
-		code += "/*This is the test class used to evaluate successive insertions.\n"
-				+ "  The insertions can be members or comments at this time. \n"
-				+ "  Later also removals shall be evaluated.*/\n\n";
-		code += "	private int numberToPrint;\n";
-		code += "	protected byte byteTest;";
-		code += "//These removals include also comments and members.\n";
-//		code += "\n";
-		/*
-		 * next to lines are just to show, that complete parsing works for the same methods that are supposed to 
-		 * be injected later.
-		 */
-		code += "	/** Sets the number to be printed by \n"
-				+ "		* invocation of printNumber().\n"
-				+ "		*/";
-		code += "	public void setNumberToPrint(int p_numberToPrint) {\n	numberToPrint = p_numberToPrint;\n	}\n";
-//		code += "	public int increment(int p_numberToIncrement) {\n	"
-//				+ "int numberToIncrement = p_numberToIncrement + 1;\n return numberToIncrement;\n	}\n";
-		code += "}";
+		// create code base to which later changes shall be applied
+		// TODO adjust name and path to your flavor and system
+		gcl.getRepo("E:\\programmaticallyCreatedGitRepo\\", "https://github.com/mkuehl/TestRepo.git");
+		gcl.extractCodeBase("E:\\programmaticallyCreatedGitRepo\\", "HEAD~6", "Printer.java");
+		diffPre.setInput(gcl.getCodeBase());
+//		diffPre.separateChanges();
+		diffPre.preprocessCodeBase();
+
+		// for code base
+		Changes codeBases = diffPre.getPrepDiff().next();
+		for (Change base : codeBases) {
+			code += base.getChanges();
+		}
 		
 		//Parse using JaMoPP
 		EObject abstractSyntaxTreeRoot = JavaResourceUtil.getResourceContent(code);
 		
+		DeltaJCreator djc = new DeltaJCreator();
+		
+		DeltaJUnit dju = djc.createDeltaJUnit();
+		Delta d = djc.createNewDelta(dju, "coredelta");
+		
+		djc.addJavaUnit(d, abstractSyntaxTreeRoot, "", "", (byte) 1);
+		
+		// TODO adjust name and path to your flavor and system
+		djc.createDeltaFile("PrintClassCoreDelta", "E:\\DeltaJ-workspace\\PrintClassDelta", d, new Change());
 		//Do something with the AST.
 		//For information on the AST structure consult:
 		//- metamodel in org.emftext.language.java/metamodel/java.ecore
 		//- concrete syntax in org.emftext.language.java/metamodel/java.cs
 		if (abstractSyntaxTreeRoot instanceof CompilationUnit) {
 			CompilationUnit compilationUnit = (CompilationUnit) abstractSyntaxTreeRoot;
-			
+
 			List<ConcreteClassifier> classifiers = compilationUnit.getClassifiers();
 			
 			for (ConcreteClassifier classifier : classifiers) {
@@ -80,13 +84,10 @@ public class JaMoPPInjection {
 				
 				List<Member> members = classifier.getMembers();
 				List<String> comments = classifier.getComments();
-				
-//				System.out.println("\n\nDEEP STRUCTURE READING ATTEMPT:\n\n");
-//				TreeIterator<EObject> ti = members.get(0).eAllContents();
-//				while(ti.hasNext()) {
-//					System.out.println("Memberelement: " + ti.next().toString());
+
+//				if (members != null && members.size() > 2 && !members.get(2).getComments().isEmpty()) {
+//					System.out.println(members.get(2).getComments().get(0));
 //				}
-				System.out.println(members.get(2).getComments().get(0));
 				
 				// print class name
 				System.out.println("Classifier: " + classifierName);
@@ -95,100 +96,64 @@ public class JaMoPPInjection {
 				printMembers(members);
 				printString(comments);
 
-				GitConnectorCmdL gcl = new GitConnectorCmdL("", "");
-				DiffPreprocessor diffPre = new DiffPreprocessor();
-				
-				gcl.executeDiff("E:\\programmaticallyCreatedGitRepo", 20, 2);
+//				diffPre.resetPrepDiff();
+				gcl.executeDiff("E:\\programmaticallyCreatedGitRepo", 6, 3, "Printer.java");
 				diffPre.setInput(gcl.getDiff());
-				System.out.println();
-				diffPre.cleanInput();
+//				System.out.println("INPUT: " + diffPre.getInput());
 				diffPre.separateChanges();
 				
-				Changes changes = diffPre.getPrepDiff().next();
-//				for (Change change : changes) {
-//					System.out.println(change.getAddRem() + "" + change.getChanges());
-//				}
-				changes.setToLast();
-				while (changes.hasPrevious()) {
-					EObject abstractSyntaxTreeRoot2 = JavaResourceUtil.getResourceContent(
-							wrapCodeWithClass(changes.getChange().getChanges()));
-					CompilationUnit cu2 = null;
-					if (abstractSyntaxTreeRoot2 instanceof CompilationUnit) {
-						cu2 = (CompilationUnit) abstractSyntaxTreeRoot2;
-
-						List<ConcreteClassifier> classifiers2 = cu2.getClassifiers();
-						
-						//TODO bring insertions in correct order within the AST. 
-						for (ConcreteClassifier classifier2 : classifiers2) {
-							List<Member> members2 = classifier2.getMembers();
-							// comments are not modifiable, so this approach is useless.
-//							List<String> comments2 = classifier2.getComments();
-//							System.out.println("CU2 MEMBERS:\t" + changes.getChange().getChanges() 
-//									+ "\tto be removed? " + changes.getChange().getAddRem() 
-//									+ "\n");
-//							printMembers(members2);
-//							printString(comments2);
-							/*
-							 * important for not applying false related addRem flags to previous handled members, 
-							 * e.g. if an empty line shall be removed, the last added member is removed instead.
-							 */
-							if (!members2.isEmpty()) {
-								if (changes.getChange().getAddRem() > 0) {
-									addMembers(members, members2);
-								} else if (changes.getChange().getAddRem() < 0) {
-									removeMembers(members, members2);
-								}
-							}
+				ChangesValidator cVal = new ChangesValidator();
+				PreprocessedDiff prepDiff = diffPre.getPrepDiff();
+				prepDiff.setToLast();
+				int noPrev = prepDiff.size(),
+					j = 1;
+				while (prepDiff.hasPrevious() || noPrev > 0) {
+					Changes changes = prepDiff.getChanges();
+					Delta tempDelta = djc.createNewDelta(dju, "Delta" + j++);
+					if (changes.size() > 0) {
+						changes.setToFirst();
+						// TODO why changes are not returned correctly??????
+						//TODO
+						//TODO
+						//TODO
+						for (Change c : changes) {
+//							System.out.println("Package Name: " + c.getPackageName() + "\tClass Name: " + c.getClassName());
+//							System.out.println("AST within JaMoPP loop: " + JavaResourceUtil.getText(cVal.validateChange(c)));
+							String packageName,
+								   className;
+//							System.out.println(c.getClassName());
+							packageName = c.getPackageName();
+							className = c.getClassName();
+//							System.out.println("Changes within loop of JaMoPPInjection: " + c.getChanges());
+							djc.addJavaUnit(tempDelta, cVal.validateChange(c), packageName, className, 
+									c.getAddRem());
+							
+							djc.createDeltaFile("PrintClassCoreDelta", "E:\\DeltaJ-workspace\\PrintClassDelta", tempDelta, c);
 						}
+//						Change change = changes.getChange();
+//						String packageName,
+//							   className;
+//						System.out.println(change.getClassName());
+//						packageName = change.getClassName().substring(0, change.getClassName().lastIndexOf(".")-1);
+//						className = change.getClassName().substring(change.getClassName().lastIndexOf("."), 
+//								change.getClassName().length());
+//						System.out.println("Changes within loop of JaMoPPInjection: " + change.getChanges());
+//						djc.addJavaUnit(tempDelta, cVal.validateChange(change), packageName, className, 
+//								change.getAddRem());
+						prepDiff.previous();
+						noPrev--;
 					}
-					changes.previous();
 				}
-				
-//				Method method = (Method) getResourceContent("public int increment(int p_numberToIncrement) {\n	"
-//						+ "int numberToIncrement = p_numberToIncrement + 1; return numberToIncrement;	}", 
-//						MembersPackage.eINSTANCE.getClassMethod());
-//				if (method != null ) {
-//					members.add(method);
-//				}
-//				method = (Method) getResourceContent("public void setNumberToPrint(int p_numberToPrint) {\n	"
-//						+ "numberToPrint = p_numberToPrint;\n	}\n", MembersPackage.eINSTANCE.getClassMethod());
-//				if (method != null) {
-//					members.add(method);
-//				}
-//				Method method = (Method) getResourceContent("public void a() {\n\n}\n", 
-//						MembersPackage.eINSTANCE.getClassMethod());
-//				if (method != null) {
-//					members.add(method);
-//				}
-//				// Try parsing constructor, works well.
-//				Constructor constructor = (Constructor) getResourceContent("public PrintClass(int p_numberToPrint) {"
-//						+ "	numberToPrint = p_numberToPrint;	}", MembersPackage.eINSTANCE.getConstructor());
-//				if(constructor != null) {
-//					members.add(constructor);
-//				}
-//				// Try parsing field, even with initialisation. No problem.
-//				Field field1 = (Field) getResourceContent("private int testnumber; testnumber = 6;", 
-//						MembersPackage.eINSTANCE.getField());
-//				if (field1 != null) {
-//					members.add(field1);
-//				}
 				
 				System.out.println("\n");
 				System.out.println("modified code:");
 				printMembers(members);
 				printString(comments);
-//				System.out.println("\n\nDEEP STRUCTURE READING ATTEMPT:\n\n");
-//				TreeIterator<EObject> ti = compilationUnit.eAllContents();
-//				while(ti.hasNext()) {
-//					System.out.println(ti.next().toString());
-//				}
-			}
+			}			
+
+//			System.out.println(JavaResourceUtil.getText(abstractSyntaxTreeRoot));
+			
 		}
-	}
-	
-	private static String wrapCodeWithClass(String code) {
-		code = "public class {\n\n" + code + "\n}";
-		return code;
 	}
 	
 	private static void printMembers(List<Member> members) {
@@ -223,57 +188,12 @@ public class JaMoPPInjection {
 			System.out.println("Comment: " + s);
 		}
 	}
-
-	/**
-	 * Adds one member to a list of members. Supposed to be the memberlist of the main compilation unit.
-	 * @param oldMembers - list of members contained in the main compilation unit
-	 * @param newMember - 
-	 */
-	private static void addMembers(List<Member> oldMembers, List<Member> newMembers) {
-		while (newMembers.size() > 0) {
-			Member newMember = newMembers.get(0);
-			if (newMember instanceof Field) {
-				oldMembers.add(newMember);
-			}
-
-			if (newMember instanceof Constructor) {
-				oldMembers.add(newMember);
-			}
-
-			if (newMember instanceof Method) {
-				oldMembers.add(newMember);
-			}
-		}		
-	}
-	
-	/**
-	 * Removes the members listed in membersToBeRemoved from oldMembers which come from the main compilation unit.
-	 * @param oldMembers
-	 * @param membersToBeRemoved
-	 */
-	private static void removeMembers(List<Member> oldMembers, List<Member> membersToBeRemoved) {
-		for (Member memberToBeRemoved : membersToBeRemoved) {
-			if (!oldMembers.contains(memberToBeRemoved)) {
-				continue;
-			}
-			if (memberToBeRemoved instanceof Field) {
-				oldMembers.remove(memberToBeRemoved);
-			}
-
-			if (memberToBeRemoved instanceof Constructor) {
-				oldMembers.remove(memberToBeRemoved);
-			}
-
-			if (memberToBeRemoved instanceof Method) {
-				oldMembers.remove(memberToBeRemoved);
-			}
-		}	
-	}
 	
 	// Your method
     public static Resource getResource(byte[] content, ResourceSet resourceSet, Map<?, ?> loadOptions) {
 
-        org.emftext.language.java.resource.java.mopp.JavaMetaInformation metaInformation = new org.emftext.language.java.resource.java.mopp.JavaMetaInformation();
+        org.emftext.language.java.resource.java.mopp.JavaMetaInformation metaInformation = 
+        		new org.emftext.language.java.resource.java.mopp.JavaMetaInformation();
 
         metaInformation.registerResourceFactory();
 

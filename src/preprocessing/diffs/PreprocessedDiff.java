@@ -36,6 +36,44 @@ public class PreprocessedDiff implements Iterable<Changes>, Iterator<Changes> {
 			modificationList.add(changes);
 		}
 	}
+	
+	public void setModificationList(LinkedList<Changes> changesList) {
+		modificationList = changesList;
+	}
+	
+	public void setToFirst() {
+		index = 0;
+	}
+	
+	public void setToLast() {
+		index = modificationList.size()-1;
+	}
+	
+	/**
+	 * Returns changes stored in modificationList. If null, null is returned.
+	 * @return
+	 */
+	public Changes getChanges() {
+		return modificationList != null ? get(index) : null;
+	}
+	
+	/**
+	 * Returns size of inner modifications list. If empty, -1 is returned.
+	 * @return
+	 */
+	public int size() {
+		if (modificationList != null) {
+			return modificationList.size();
+		}
+		return -1;
+	}
+	
+	public boolean hasPrevious() {
+		if (index > 0) {
+			return true;
+		}
+		return false;
+	}
 
 	@Override
 	public boolean hasNext() {
@@ -44,12 +82,15 @@ public class PreprocessedDiff implements Iterable<Changes>, Iterator<Changes> {
 		}
 		return false;
 	}
-	
-	public boolean hasPrevious() {
-		if (index > 0) {
-			return true;
-		}
-		return false;
+
+	@Override
+	public void remove() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Iterator<Changes> iterator() {
+		return this;
 	}
 
 	@Override
@@ -67,13 +108,21 @@ public class PreprocessedDiff implements Iterable<Changes>, Iterator<Changes> {
 		return modificationList.get(index--);
 	}
 
-	@Override
-	public void remove() {
-		throw new UnsupportedOperationException();
+	
+	public void clear() {
+		modificationList = new LinkedList<Changes>();
+		index = 0;
 	}
-
-	@Override
-	public Iterator<Changes> iterator() {
-		return this;
+	
+	/**
+	 * If p_index is smaller than the size of the list, a normal get(index) is performed. If p_index is equal
+	 * to the modificationList's size the last item is returned.
+	 * @param p_index
+	 * @return
+	 */
+	private Changes get(int p_index) {
+		int size = modificationList.size();
+		return p_index >= size ? modificationList.get(size - 1) : 
+			modificationList.get(p_index);
 	}
 }

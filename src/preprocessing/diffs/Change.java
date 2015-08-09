@@ -7,6 +7,8 @@ package preprocessing.diffs;
  */
 public class Change {
 
+	// contains the class/file name
+	private String qualifiedClassName;
 	// Marks the beginning line of the respective changes
 	private int beginningLine;
 	// Flags if the respective change is a modification, removal or an addition
@@ -15,15 +17,45 @@ public class Change {
 	private String changes;
 	
 	public Change() {
+		qualifiedClassName = "";
 		beginningLine = -1;
 		addRem = -128;
 		changes = null;
 	}
 	
-	public Change(byte p_addRem, int p_beginningLine, String p_changes) {
+	public Change(String p_qualifiedClassName, byte p_addRem, int p_beginningLine, String p_changes) {
+		qualifiedClassName = p_qualifiedClassName;
 		addRem = p_addRem;
 		beginningLine = p_beginningLine;
 		changes = p_changes;
+	}
+	
+	public void setQualifiedClassName(String p_qualifiedClassName) {
+		qualifiedClassName = p_qualifiedClassName;
+	}
+	
+	/**
+	 * Returns package and classname.
+	 * @return
+	 */
+	public String getQualifiedClassName() {
+		return qualifiedClassName;
+	}
+	
+	/**
+	 * Returns class name only.
+	 * @return
+	 */
+	public String getClassName() {
+		return qualifiedClassName.substring(qualifiedClassName.lastIndexOf(".")+1, qualifiedClassName.length());
+	}
+	
+	/**
+	 * Returns fully qualified package name only.
+	 * @return
+	 */
+	public String getPackageName() {
+		return qualifiedClassName.substring(0, qualifiedClassName.lastIndexOf("."));
 	}
 	
 	/**

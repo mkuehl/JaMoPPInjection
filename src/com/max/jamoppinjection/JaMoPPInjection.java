@@ -47,7 +47,11 @@ public class JaMoPPInjection {
 		// create code base to which later changes shall be applied
 		// TODO adjust name and path to your flavor and system
 		gcl.getRepo("E:\\programmaticallyCreatedGitRepo\\", "https://github.com/mkuehl/TestRepo.git");
+<<<<<<< HEAD
 		gcl.extractCodeBase("E:\\programmaticallyCreatedGitRepo\\", "HEAD~6", "Printer.java");
+=======
+		gcl.extractCodeBase("E:\\programmaticallyCreatedGitRepo\\", "HEAD~3", "Printer.java");
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 		diffPre.setInput(gcl.getCodeBase());
 //		diffPre.separateChanges();
 		diffPre.preprocessCodeBase();
@@ -69,7 +73,11 @@ public class JaMoPPInjection {
 		djc.addJavaUnit(d, abstractSyntaxTreeRoot, "", "", (byte) 1);
 		
 		// TODO adjust name and path to your flavor and system
+<<<<<<< HEAD
 		djc.createDeltaFile("PrintClassCoreDelta", "E:\\DeltaJ-workspace\\PrintClassDelta", d, new Change());
+=======
+		djc.createDeltaFile("PrintClassCoreDelta", "E:\\DeltaJ-workspace\\PrintClassDelta", d);
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 		//Do something with the AST.
 		//For information on the AST structure consult:
 		//- metamodel in org.emftext.language.java/metamodel/java.ecore
@@ -85,9 +93,15 @@ public class JaMoPPInjection {
 				List<Member> members = classifier.getMembers();
 				List<String> comments = classifier.getComments();
 
+<<<<<<< HEAD
 //				if (members != null && members.size() > 2 && !members.get(2).getComments().isEmpty()) {
 //					System.out.println(members.get(2).getComments().get(0));
 //				}
+=======
+				if (members != null && members.size() > 2 && !members.get(2).getComments().isEmpty()) {
+					System.out.println(members.get(2).getComments().get(0));
+				}
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 				
 				// print class name
 				System.out.println("Classifier: " + classifierName);
@@ -97,12 +111,21 @@ public class JaMoPPInjection {
 				printString(comments);
 
 //				diffPre.resetPrepDiff();
+<<<<<<< HEAD
 				gcl.executeDiff("E:\\programmaticallyCreatedGitRepo", 6, 3, "Printer.java");
+=======
+				gcl.executeDiff("E:\\programmaticallyCreatedGitRepo", 3, 0, "Printer.java");
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 				diffPre.setInput(gcl.getDiff());
 //				System.out.println("INPUT: " + diffPre.getInput());
 				diffPre.separateChanges();
 				
 				ChangesValidator cVal = new ChangesValidator();
+<<<<<<< HEAD
+=======
+				// TODO For testing only
+				cVal.setMembers(members);
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 				PreprocessedDiff prepDiff = diffPre.getPrepDiff();
 				prepDiff.setToLast();
 				int noPrev = prepDiff.size(),
@@ -117,6 +140,7 @@ public class JaMoPPInjection {
 						//TODO
 						//TODO
 						for (Change c : changes) {
+<<<<<<< HEAD
 //							System.out.println("Package Name: " + c.getPackageName() + "\tClass Name: " + c.getClassName());
 //							System.out.println("AST within JaMoPP loop: " + JavaResourceUtil.getText(cVal.validateChange(c)));
 							String packageName,
@@ -129,6 +153,17 @@ public class JaMoPPInjection {
 									c.getAddRem());
 							
 							djc.createDeltaFile("PrintClassCoreDelta", "E:\\DeltaJ-workspace\\PrintClassDelta", tempDelta, c);
+=======
+							String packageName,
+							className;
+							System.out.println(c.getClassName());
+							packageName = c.getClassName().substring(0, c.getClassName().lastIndexOf("."));
+							className = c.getClassName().substring(c.getClassName().lastIndexOf(".")+1, 
+									c.getClassName().length());
+							System.out.println("Changes within loop of JaMoPPInjection: " + c.getChanges());
+							djc.addJavaUnit(tempDelta, cVal.validateChange(c), packageName, className, 
+									c.getAddRem());
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 						}
 //						Change change = changes.getChange();
 //						String packageName,
@@ -140,6 +175,10 @@ public class JaMoPPInjection {
 //						System.out.println("Changes within loop of JaMoPPInjection: " + change.getChanges());
 //						djc.addJavaUnit(tempDelta, cVal.validateChange(change), packageName, className, 
 //								change.getAddRem());
+<<<<<<< HEAD
+=======
+						djc.createDeltaFile("PrintClassCoreDelta", "E:\\DeltaJ-workspace\\PrintClassDelta", tempDelta);
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 						prepDiff.previous();
 						noPrev--;
 					}
@@ -151,7 +190,11 @@ public class JaMoPPInjection {
 				printString(comments);
 			}			
 
+<<<<<<< HEAD
 //			System.out.println(JavaResourceUtil.getText(abstractSyntaxTreeRoot));
+=======
+			System.out.println(JavaResourceUtil.getText(abstractSyntaxTreeRoot));
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 			
 		}
 	}

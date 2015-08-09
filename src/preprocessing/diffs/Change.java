@@ -8,7 +8,11 @@ package preprocessing.diffs;
 public class Change {
 
 	// contains the class/file name
+<<<<<<< HEAD
 	private String qualifiedClassName;
+=======
+	private String className;
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 	// Marks the beginning line of the respective changes
 	private int beginningLine;
 	// Flags if the respective change is a modification, removal or an addition
@@ -17,19 +21,29 @@ public class Change {
 	private String changes;
 	
 	public Change() {
+<<<<<<< HEAD
 		qualifiedClassName = "";
+=======
+		className = "";
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 		beginningLine = -1;
 		addRem = -128;
 		changes = null;
 	}
 	
+<<<<<<< HEAD
 	public Change(String p_qualifiedClassName, byte p_addRem, int p_beginningLine, String p_changes) {
 		qualifiedClassName = p_qualifiedClassName;
+=======
+	public Change(String p_className, byte p_addRem, int p_beginningLine, String p_changes) {
+		className = p_className;
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 		addRem = p_addRem;
 		beginningLine = p_beginningLine;
 		changes = p_changes;
 	}
 	
+<<<<<<< HEAD
 	public void setQualifiedClassName(String p_qualifiedClassName) {
 		qualifiedClassName = p_qualifiedClassName;
 	}
@@ -56,6 +70,14 @@ public class Change {
 	 */
 	public String getPackageName() {
 		return qualifiedClassName.substring(0, qualifiedClassName.lastIndexOf("."));
+=======
+	public void setClassFile(String p_className) {
+		className = p_className;
+	}
+	
+	public String getClassName() {
+		return className;
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 	}
 	
 	/**

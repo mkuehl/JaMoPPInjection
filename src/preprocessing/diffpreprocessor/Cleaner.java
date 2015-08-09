@@ -11,6 +11,15 @@ public class Cleaner {
 	 */
 	public static String cleanInput(String input) {
 		if (input != null && !input.isEmpty()) {
+<<<<<<< HEAD
+=======
+//			String regexExtract = "[0-9a-z]{40}\\s";
+//			Pattern pExtract = Pattern.compile(regexExtract);
+//			Matcher mExtract = pExtract.matcher(input);
+//			while (mExtract.find()) {
+//				alCommitHashes.add(mExtract.group().replace(" ", ""));
+//			}
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 			// first line says, that lines start with one expression within the parenthesis followed by an optional : and a mandatory whitespace
 			String regex = "((From|Date):\\s" //removed Subject from inside parentheses
 					// matches the following example: 8071651f2235b87551e757ba8f53d74509be5d3f Mon Sep 17 00:00:00 2001 (hash, day, month, date, time, year)
@@ -33,6 +42,10 @@ public class Cleaner {
 					+ "((new|modified|deleted)\\s(file)\\s(mode)\\s[\\d]{6}))";
 			Pattern p = Pattern.compile(regex);
 			Matcher m = p.matcher(input);
+<<<<<<< HEAD
+=======
+//			System.out.println("Input: " + input);
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 			input = m.replaceAll("");
 		}
 		return input;

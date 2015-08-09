@@ -151,10 +151,17 @@ public class DiffPreprocessor {
 			// if commit hash is found, save it and continue.
 			if (mCommitExtract.find()) {
 				// the actual changes have to be added to the superior changesList here
+<<<<<<< HEAD
 //				if (changes != null && changes.isEverythingSet()) {
 //					changesList.add(changes);
 //					changes = null;
 //				}
+=======
+				if (changes != null && changes.isEverythingSet()) {
+					changesList.add(changes);
+					changes = null;
+				}
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 				changes = new Changes();
 				changes.setCommitHash(mCommitExtract.group());
 				continue;
@@ -221,7 +228,11 @@ public class DiffPreprocessor {
 							}
 							change.setAddRem(addRem);
 							change.setBeginningLine(beginningLine);
+<<<<<<< HEAD
 							change.setQualifiedClassName(qualifiedClassName);
+=======
+							change.setClassFile(qualifiedClassName);
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 							// if actual changes are null, take "" + mods
 							change.setChanges((change.getChanges() == null ? "" : change.getChanges())
 									+ modifications.toString());
@@ -243,7 +254,11 @@ public class DiffPreprocessor {
 							}
 							change.setAddRem(addRem);
 							change.setBeginningLine(beginningLine);
+<<<<<<< HEAD
 							change.setQualifiedClassName(qualifiedClassName);
+=======
+							change.setClassFile(qualifiedClassName);
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 							change.setChanges(change.getChanges() + modifications.toString());
 							modifications.delete(0, modifications.length());
 							addRem = -128;
@@ -261,7 +276,11 @@ public class DiffPreprocessor {
 							}
 							change.setAddRem(addRem);
 							change.setBeginningLine(beginningLine);
+<<<<<<< HEAD
 							change.setQualifiedClassName(qualifiedClassName);
+=======
+							change.setClassFile(qualifiedClassName);
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 							change.setChanges(change.getChanges() + modifications.toString());
 							modifications.delete(0, modifications.length());
 							addRem = -128;

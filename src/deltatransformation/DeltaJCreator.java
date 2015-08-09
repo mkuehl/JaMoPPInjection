@@ -8,12 +8,16 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 import org.deltaj.deltaJ.AddsClassBodyMemberDeclaration;
+<<<<<<< HEAD
 import org.deltaj.deltaJ.AddsEnumConstant;
 import org.deltaj.deltaJ.AddsImport;
 import org.deltaj.deltaJ.AddsInterfacesList;
 import org.deltaj.deltaJ.AddsMember;
 import org.deltaj.deltaJ.AddsMemberDeclaration;
 import org.deltaj.deltaJ.AddsSuperclass;
+=======
+import org.deltaj.deltaJ.AddsMember;
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 import org.deltaj.deltaJ.AddsUnit;
 import org.deltaj.deltaJ.Delta;
 import org.deltaj.deltaJ.DeltaAction;
@@ -21,6 +25,7 @@ import org.deltaj.deltaJ.DeltaJFactory;
 import org.deltaj.deltaJ.DeltaJUnit;
 import org.deltaj.deltaJ.JavaCompilationUnit;
 import org.deltaj.deltaJ.ModifiesAction;
+<<<<<<< HEAD
 import org.deltaj.deltaJ.ModifiesUnit;
 import org.deltaj.deltaJ.RemovesField;
 import org.deltaj.deltaJ.RemovesImport;
@@ -28,6 +33,11 @@ import org.deltaj.deltaJ.RemovesInterfacesList;
 import org.deltaj.deltaJ.RemovesMethod;
 import org.deltaj.deltaJ.RemovesSuperclass;
 import org.deltaj.deltaJ.RemovesUnit;
+=======
+import org.deltaj.deltaJ.ModifiesPackage;
+import org.deltaj.deltaJ.ModifiesUnit;
+import org.deltaj.deltaJ.PackageDeclaration;
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 import org.deltaj.deltaJ.Source;
 import org.deltaj.deltaJ.Sources;
 import org.eclipse.emf.common.util.EList;
@@ -36,10 +46,13 @@ import org.emftext.language.java.classifiers.ConcreteClassifier;
 import org.emftext.language.java.containers.CompilationUnit;
 import org.emftext.language.java.resource.java.util.JavaResourceUtil;
 
+<<<<<<< HEAD
 import preprocessing.diffs.Change;
 
 import com.max.jamoppinjection.ChangesValidator;
 
+=======
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 public class DeltaJCreator {
 
 	/**
@@ -87,6 +100,7 @@ public class DeltaJCreator {
 	}
 	
 	/**
+<<<<<<< HEAD
 	 * Creates a DeltaAction of the specified type. The parameter string has the following semantic:
 	 * a = AddsUnit, m = ModifiesUnit, r = RemovesUnit;
 	 * ModifiesUnits have to be further distinguished followingg this semantics:
@@ -121,6 +135,8 @@ public class DeltaJCreator {
 	}
 	
 	/**
+=======
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 	 * Creating an AddsUnit with jamoppParsedClass as content. It is then added
 	 * to the parent node of type Delta.
 	 * 
@@ -134,13 +150,18 @@ public class DeltaJCreator {
 	 * 			  numbers mean addition, negative removal and zero modification. 
 	 */
 	public void addJavaUnit(Delta parent, EObject jamoppParsedClass, String packageName, String className, 
+<<<<<<< HEAD
 			byte addRem/* DeltaAction da*/) {
+=======
+			byte addRem) {
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 		// Trigger transformation of JaMoPP to DeltaJ AST
 		JavaCompilationUnit jcu = fancyJamoppToDeltaJTransformation(jamoppParsedClass);
 		CompilationUnit cu = (CompilationUnit) jamoppParsedClass;
 		for (ConcreteClassifier c : cu.getClassifiers()) {
 			c.getFields();
 		}
+<<<<<<< HEAD
 //		if (da instanceof AddsUnit) {
 //			// Creating AddsUnit node.
 //			addJavaAddsUnit(parent, jcu);
@@ -155,6 +176,15 @@ public class DeltaJCreator {
 			addJavaAddsUnit(parent, jcu);
 		} else if (addRem == 0) {
 			addJavaModifiesUnit(parent, packageName, className, jcu);
+=======
+		if (addRem > 0) {
+			// Creating AddsUnit node.
+			addJavaAddsUnit(parent, jcu);
+		} else if (addRem == 0) {
+			 addJavaModifiesUnit(parent, packageName, className, jcu);
+		} else {
+			
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 		}
 	}
 	
@@ -170,6 +200,7 @@ public class DeltaJCreator {
 		// Nothing will be returned because we don't need to add anything here.
 	}
 	
+<<<<<<< HEAD
 	private void addJavaModifiesUnit(Delta parent, String packageName, String className, /*DeltaAction da, /*ModifiesAction ma, */JavaCompilationUnit deltaCode) {
 		ModifiesUnit mu = factory.createModifiesUnit();
 		AddsClassBodyMemberDeclaration decl = factory.createAddsClassBodyMemberDeclaration();
@@ -202,11 +233,39 @@ public class DeltaJCreator {
 //		code.substring(code.indexOf(" ")+1, code.indexOf("("));
 //		return code;
 //	}
+=======
+	private void addJavaModifiesUnit(Delta parent, String packageName, String className, JavaCompilationUnit deltaCode) {
+		ModifiesUnit mu = factory.createModifiesUnit();
+		ModifiesAction decl = factory.createAddsClassBodyMemberDeclaration();
+//		Sources ss = factory.createSources();
+//		Source s = factory.createSource();
+//		System.out.println(deltaCode.toString());
+//		s.setDelta(deltaCode.toString());
+//		ss.getSources().add(s);
+		for (Source s : deltaCode.getSource().getSources()) {
+			System.out.println(s.getDelta());
+		}
+//		decl.setSource(deltaCode.getSource());
+//		AddsMember am = factory.createAddsMember();
+//		am = decl;
+//		ModifiesAction ma = factory.createModifiesAction();
+//		ma = am;
+		ModifiesPackage mp = factory.createModifiesPackage();
+		PackageDeclaration md = factory.createPackageDeclaration();
+		md.setName(packageName);
+		mp.setPackage(md);
+		mu.setModifiesPackage(mp);
+		mu.setName(className);
+		mu.getModifiesClassMembers().add(decl);
+		parent.getDeltaActions().add(mu);
+	}
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 	/*
 	 *  TODO create methods for modification and removal of elements. Works entirely different than AddsUnit, because
 	 *  no unit is set but smaller actions for modifications have to be set. Do not know yet, how to apply removals!!
 	 */
 	
+<<<<<<< HEAD
 	private JavaCompilationUnit fancyJamoppToDeltaJTransformation(EObject jamoppAST) {
 		if (jamoppAST == null) {
 //			System.out.println("...............AST IST NULL..................");
@@ -217,6 +276,43 @@ public class DeltaJCreator {
 //		System.out.println("Given AST: " + JavaResourceUtil.getText(jamoppAST) + " END Given AST");
 //		CompilationUnit cu = (CompilationUnit) jamoppAST;
 //		System.out.println("CU: " + cu.toString() + " END CU");
+=======
+//	private void addJavaModifiesUnit(Delta parent, JavaCompilationUnit deltaCode) {
+//		ModifiesUnit mu = factory.createModifiesUnit();
+//		
+//		ModifiesAction ma = factory.createModifiesAction();
+//		
+//		mu.getModifiesClassMembers().add(ma);
+//		// Adding the child node to the adds unit
+////		mu.setUnit(deltaCode);
+//
+//		// Adding the adds unit node as child to the delta node
+//		parent.getDeltaActions().add(mu);
+//
+//		// Nothing will be returned because we don't need to add anything here.
+//	}
+//	
+//	private void addJavaRemovesUnit(Delta parent, JavaCompilationUnit deltaCode) {
+//		RemovesUnit ru = factory.createRemovesUnit();
+//		factory.createrem
+//		// Adding the child node to the adds unit
+//		ru.setUnit(deltaCode);
+//
+//		// Adding the adds unit node as child to the delta node
+//		parent.getDeltaActions().add(ru);
+//
+//		// Nothing will be returned because we don't need to add anything here.
+//	}
+	
+	private JavaCompilationUnit fancyJamoppToDeltaJTransformation(EObject jamoppAST) {
+		if (jamoppAST == null) {
+			System.out.println("...............AST IST NULL..................");
+			return null;
+		}
+		System.out.println("Given AST: " + JavaResourceUtil.getText(jamoppAST) + " END Given AST");
+		CompilationUnit cu = (CompilationUnit) jamoppAST;
+		System.out.println("CU: " + cu.toString() + " END CU");
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 //		for (String ns : cu.getNamespaces()) {
 //			System.out.println("Namespace: " + ns);
 //		}
@@ -241,6 +337,7 @@ public class DeltaJCreator {
 		JavaCompilationUnit jcu = factory.createJavaCompilationUnit();
 		Sources ss = factory.createSources();
 		Source s = factory.createSource();
+<<<<<<< HEAD
 //		System.out.println("TRIMMED AST: ");
 //		System.out.println(JavaResourceUtil.getText(jamoppAST).trim());
 //		System.out.println("END OF TRIMMED AST");
@@ -250,6 +347,14 @@ public class DeltaJCreator {
 //		for (Source ts : jcu.getSource().getSources()) {
 //			System.out.println("Delta: " + ts.getDelta());
 //		}
+=======
+		s.setDelta(JavaResourceUtil.getText(jamoppAST).trim());
+		ss.getSources().add(s);
+		jcu.setSource(ss);
+		for (Source ts : jcu.getSource().getSources()) {
+			System.out.println("Delta: " + ts.getDelta());
+		}
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 		
 		return jcu;
 	}
@@ -263,24 +368,36 @@ public class DeltaJCreator {
 	 * @param d
 	 * 			delta to write in file.
 	 */
+<<<<<<< HEAD
 	public void createDeltaFile(String name, String path, Delta d, Change c) {
+=======
+	public void createDeltaFile(String name, String path, Delta d) {
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 		try {
 			File f = new File(path + "\\" + name + ".deltaj");
 			// without getParentFile() the path is created with the designated file as directory.
 			f.getParentFile().mkdirs();
 //			System.setProperty("user.dir", path);
+<<<<<<< HEAD
 			StringBuilder affectedMembers = null;
+=======
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 			BufferedWriter out = new BufferedWriter(new FileWriter(f, true));
 			String change = "";
 			out.append("delta " + d.getName() + " {\n");
 			for (DeltaAction da : d.getDeltaActions()) {
 				if (da instanceof AddsUnit) {
+<<<<<<< HEAD
 //					out.write("adds {\n");
+=======
+					out.write("adds {\n");
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 					AddsUnit au = (AddsUnit) da;
 					for (Source s : au.getUnit().getSource().getSources()) {
 						change = s.getDelta();
 					}
 				} else if (da instanceof ModifiesUnit) {
+<<<<<<< HEAD
 					out.write("modifies " + c.getQualifiedClassName() + " {\n");
 					ModifiesUnit mu = (ModifiesUnit) da;
 					for (ModifiesAction ma : mu.getModifiesClassMembers()) {
@@ -318,15 +435,26 @@ public class DeltaJCreator {
 					}
 					if (affectedMembers != null) {
 						out.write(affectedMembers.toString());
+=======
+					out.write("modifies {\n");
+					ModifiesUnit mu = (ModifiesUnit) da;
+					for (ModifiesAction ma : mu.getModifiesClassMembers()) {
+						change += ma.toString();
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 					}
 				} else {
 //					RemovesUnit ru = (RemovesUnit) da;
 //					for (RemovesAction ra : ru.)
 				}
 				out.append(change);
+<<<<<<< HEAD
 				
 			}
 			out.append("\n}\n}\n");
+=======
+			}
+			out.append("}\n}\n");
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 			out.close();
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
@@ -336,6 +464,7 @@ public class DeltaJCreator {
 			e.printStackTrace();
 		}
 	}
+<<<<<<< HEAD
 	
 	/**
 	 * Checks type of change. If ma removes something, -1 is returned, if it adds something, 
@@ -357,4 +486,6 @@ public class DeltaJCreator {
 			return 0;
 		}
 	}
+=======
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 }

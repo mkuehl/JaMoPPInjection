@@ -90,9 +90,12 @@ public class DiffPreprocessor {
 					} else if (line.contains("class")) {
 						qualifiedClassName += "." + line.substring(line.lastIndexOf("class")+6, line.indexOf(" {"));
 					}
+<<<<<<< HEAD
 					if (line.equals("\\ No newline at end of file") || line.equals(lines[lines.length-1])) {
 						break;
 					}
+=======
+>>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 					// addition
 					if (line.startsWith("+")) {
 						// necessary for additions directly succeeding removals
@@ -106,9 +109,13 @@ public class DiffPreprocessor {
 						modifications.append(line.substring(1) + (line.endsWith("\n") ? "" : "\n"));
 					}
 				}
+<<<<<<< HEAD
 				changes.add(new Change(qualifiedClassName, beginningLine, addRem, "a", 
 						modifications.toString()));
 				modifications.delete(0, modifications.length());
+=======
+				changes.add(new Change(qualifiedClassName, addRem, beginningLine, modifications.toString()));
+>>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 				changesList.add(changes);
 			}
 		}
@@ -164,10 +171,23 @@ public class DiffPreprocessor {
 			// if commit hash is found, save it and continue.
 			if (mCommitExtract.find()) {
 				// the actual changes have to be added to the superior changesList here
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 //				if (changes != null && changes.isEverythingSet()) {
 //					changesList.add(changes);
 //					changes = null;
 //				}
+<<<<<<< HEAD
+=======
+=======
+				if (changes != null && changes.isEverythingSet()) {
+					changesList.add(changes);
+					changes = null;
+				}
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
+>>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 				changes = new Changes();
 				changes.setCommitHash(mCommitExtract.group());
 				continue;
@@ -187,6 +207,7 @@ public class DiffPreprocessor {
 			}
 			// if no line info found, check if t starts with "[PATCH]", if not, iterate over lines.
 			else if (!t.startsWith("[PATCH]")) {
+<<<<<<< HEAD
 				Change change = new Change();
 				
 				if (ClassAdditionExaminer.isWholeClassAdded(t)) {
@@ -196,6 +217,8 @@ public class DiffPreprocessor {
 					change.setAddRem((byte) -1);
 					change.setTypeOfChange("r");
 				}
+=======
+>>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 				/* 
 				 * if t contains no package name, the changes can not be assigned to a specific class since 
 				 * in DeltaJ class names have to be qualified.
@@ -212,16 +235,29 @@ public class DiffPreprocessor {
 						|| t.startsWith(" class") || t.startsWith(" private class"))) {
 					skipFirst = true;
 				}
+<<<<<<< HEAD
 
 				qualifiedClassName = extractQualifiedClassName(t);
 				lines = t.split("\\r?\\n");
 				for (String line : lines) {
+=======
+				Change change = new Change();
+
+				lines = t.split("\\r?\\n");
+				for (String line : lines) {
+					if (line.contains("package")) {
+						qualifiedClassName = line.substring(line.lastIndexOf("package") + 8, line.indexOf(";"));
+					} else if (line.contains("class")) {
+						qualifiedClassName += "." + line.substring(line.lastIndexOf("class")+6, line.indexOf(" {"));
+					}
+>>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 					/*
 					 * Necessary because a lot of lines have to be obtained to get the fully qualified name
 					 * of the respective class. If ensures that all lines are skipped that have no modi-
 					 * fications.
 					 */
 					if (!(line.startsWith("+") || line.startsWith("-") || line.equals(lines[lines.length-1]))) {
+<<<<<<< HEAD
 
 						lineBeforeWasAdded = 'u';
 						/*
@@ -238,6 +274,8 @@ public class DiffPreprocessor {
 								addRem = -128;
 							}
 						}
+=======
+>>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 						continue;
 					}
 					if (skipFirst) {
@@ -247,6 +285,7 @@ public class DiffPreprocessor {
 					}
 					// addition, excluding a multiline string with leading + for second and later fragments
 					if (line.startsWith("+") && !line.startsWith("\"", 1)) {
+<<<<<<< HEAD
 						if (lineBeforeWasAdded == 'r') {
 							if (changes == null) {
 								changes = new Changes();
@@ -258,9 +297,29 @@ public class DiffPreprocessor {
 								modifications.delete(0, modifications.length());
 								addRem = -128;
 							}
+=======
+						// necessary for additions directly succeeding removals
+						if (addRem < 1 && addRem != -128) {
+							if (changes == null) {
+								changes = new Changes();
+							}
+							change.setAddRem(addRem);
+							change.setBeginningLine(beginningLine);
+<<<<<<< HEAD
+							change.setQualifiedClassName(qualifiedClassName);
+=======
+							change.setClassFile(qualifiedClassName);
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
+							// if actual changes are null, take "" + mods
+							change.setChanges((change.getChanges() == null ? "" : change.getChanges())
+									+ modifications.toString());
+							modifications.delete(0, modifications.length());
+							addRem = -128;
+>>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 						}
 						lineBeforeWasAdded = 'a';
 						if (addRem == -128) {
+<<<<<<< HEAD
 							// imports just can be added or removed, thus 0 is not allowed.
 							if (line.contains("import")) {
 								addRem = 1;
@@ -272,6 +331,9 @@ public class DiffPreprocessor {
 							} else {
 								addRem = 0;
 							}
+=======
+							addRem = 0;
+>>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 							beginningLine = actualLine;
 						}
 						modifications.append(line.substring(1) + (line.endsWith("\n") ? "" : "\n"));
@@ -298,8 +360,19 @@ public class DiffPreprocessor {
 							if (changes == null) {
 								changes = new Changes();
 							}
+<<<<<<< HEAD
 							change = createChange(addRem, beginningLine, qualifiedClassName, 
 									modifications.toString());
+=======
+							change.setAddRem(addRem);
+							change.setBeginningLine(beginningLine);
+<<<<<<< HEAD
+							change.setQualifiedClassName(qualifiedClassName);
+=======
+							change.setClassFile(qualifiedClassName);
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
+							change.setChanges(change.getChanges() + modifications.toString());
+>>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 							modifications.delete(0, modifications.length());
 							addRem = -128;
 						}
@@ -319,8 +392,19 @@ public class DiffPreprocessor {
 							if (changes == null) {
 								changes = new Changes();
 							}
+<<<<<<< HEAD
 							change = createChange(addRem, beginningLine, qualifiedClassName, 
 									modifications.toString());
+=======
+							change.setAddRem(addRem);
+							change.setBeginningLine(beginningLine);
+<<<<<<< HEAD
+							change.setQualifiedClassName(qualifiedClassName);
+=======
+							change.setClassFile(qualifiedClassName);
+>>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
+							change.setChanges(change.getChanges() + modifications.toString());
+>>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 							modifications.delete(0, modifications.length());
 							addRem = -128;
 							lineBeforeWasAdded = 'u';
@@ -338,11 +422,16 @@ public class DiffPreprocessor {
 						if (change.getChanges() == null || change.getChanges().equals("")) {
 							continue;
 						} else {
+<<<<<<< HEAD
 							if (change.getChanges() != null && change.getChanges() != "" && 
 									change.getChanges().length() > 0) {
 								changes.add(change);
 								change = new Change();
 							}
+=======
+							changes.add(change);
+							change = new Change();
+>>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 						}
 					}
 				}
@@ -350,6 +439,7 @@ public class DiffPreprocessor {
 			}
 
 			changesList.add(changes);
+<<<<<<< HEAD
 		}
 		prepDiff.setModificationList(changesList);
 	}
@@ -389,6 +479,10 @@ public class DiffPreprocessor {
 		change.setChanges((change.getChanges() == null ? "" : change.getChanges())
 				+ modifications.toString());
 		return change;
+=======
+		}
+		prepDiff.setModificationList(changesList);
+>>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 	}
 	
 	/**

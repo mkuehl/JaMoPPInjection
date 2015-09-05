@@ -422,7 +422,9 @@ public class DiffPreprocessor {
 				s.add(commitPart);
 			}
 
-			changesList.add(changes);
+			if (!changesList.contains(changes)) {
+				changesList.add(changes);
+			}
 		}
 		prepDiff.setModificationList(changesList);
 	}

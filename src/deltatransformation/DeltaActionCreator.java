@@ -57,7 +57,13 @@ public class DeltaActionCreator {
 					affectedMembers.append(" " + s.trim() + "\n");
 				}
 			} else {
-				affectedMembers.append(" " + s.trim() + "\n");
+				affectedMembers.append(" " + s.trim());
+				if (ma instanceof AddsInterfacesList || ma instanceof AddsSuperclass ||
+						ma instanceof RemovesInterfacesList || ma instanceof RemovesSuperclass ||
+						ma instanceof ModifiesSuperclass) {
+					affectedMembers.append(";");
+				}
+				affectedMembers.append("\n");
 			}
 		}
 		return affectedMembers.toString();
@@ -72,10 +78,9 @@ public class DeltaActionCreator {
 	 */
 	private String typeOfChange(EObject ma) {
 		if (ma instanceof RemovesField || ma instanceof RemovesImport ||
-				ma instanceof RemovesInterfacesList || ma instanceof RemovesMethod) {
+				ma instanceof RemovesInterfacesList || ma instanceof RemovesMethod ||
+				ma instanceof RemovesSuperclass) {
 			return "removes";
-		} else if (ma instanceof RemovesSuperclass) {
-			return "removes superclass";
 		} else if (ma instanceof AddsClassBodyMemberDeclaration || ma instanceof AddsImport ||
 				ma instanceof AddsInterfacesList || ma instanceof AddsMember ||
 				ma instanceof AddsMemberDeclaration || ma instanceof AddsEnumConstant ||

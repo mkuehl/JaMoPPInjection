@@ -7,11 +7,29 @@ import java.util.regex.Pattern;
 public class MemberSeparator {
 
 	// separates all members within the given String. A member is a Field or a Method.
-	public LinkedList<String> separateMembers(String allMembers) {
+	public LinkedList<String> separateMembers(String allMembers, String typeOfChange) {
 		LinkedList<String> separatedMembers = new LinkedList<String>();
+		// Gets filled with the members signature and body. For methods, this takes several iterations.
 		String member = "";
 		boolean isMember = false;
-		// matches methods
+
+		// matches packages.
+		String packageRegex = "package\\s[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*;";
+		Pattern packagePattern = Pattern.compile(packageRegex);
+		Matcher packageMatcher;
+		// matches imports, like packages but must consider qualified names and the possible asterix.
+		String importRegex = "import\\s[a-zA-Z0-9_]+(\\.([a-zA-Z0-9_]+|\\*))+;";
+		Pattern importPattern = Pattern.compile(importRegex);
+		Matcher importMatcher;
+//		// matches superclasses, like packages but without the semicolon.
+//		String superclassRegex = "extends\\s[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*";
+//		Pattern superclassPattern = Pattern.compile(superclassRegex);
+//		Matcher superclassMatcher;
+//		// matches interfaces, like packages but without the semicolon.
+//		String interfaceRegex = "implements\\s[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*([\\s]*,[\\s]*[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)+)*";
+//		Pattern interfacePattern = Pattern.compile(interfaceRegex);
+//		Matcher interfaceMatcher;
+		// matches methods, optional modifier, return type, name, starting bracket for param list.
 		String memberRegex = "(public|protected|private)?\\s[a-zA-Z0-9_]+\\s[a-zA-Z0-9_]+\\s?\\(?";
 		Pattern memberPattern = Pattern.compile(memberRegex);
 		Matcher memberMatcher;
@@ -19,14 +37,44 @@ public class MemberSeparator {
 		// to ensure, that the member is completed, count opening and closing curly brackets.
 		int openedCurlyBrackets = 0,
 			closedCurlyBrackets = 0;
+		
+		if (typeOfChange.equals("main") || typeOfChange.equals("masc")) {
+			separatedMembers.add(allMembers);
+			return separatedMembers;
+		}
+		
 		// split given String by line endings.
 		String[] lines = allMembers.split("\\r?\\n");
 		for (String line : lines) {
+			packageMatcher = packagePattern.matcher(line);
+			importMatcher = importPattern.matcher(line);
+//			superclassMatcher = superclassPattern.matcher(line);
+//			interfaceMatcher = interfacePattern.matcher(line);
 			memberMatcher = memberPattern.matcher(line);
+			
+			if (packageMatcher.find()) {
+				separatedMembers.add(line);
+				continue;
+			}
+			
+			if (importMatcher.find()) {
+				separatedMembers.add(line);
+				continue;
+			}
+//			
+//			if (interfaceMatcher.find()) {
+//				separatedMembers.add(interfaceMatcher.group());
+//				continue;
+//			}
+//			
+//			if (superclassMatcher.find()) {
+//				separatedMembers.add(superclassMatcher.group());
+//				continue;
+//			}
 			/*
-			 * if methodMatcher finds a method and this method is not inside a method, which is
-			 * not allowed unless with not yet supported anonymous classes for example usually
-			 * used for adding listeners. 
+			 * if memberMatcher finds a member and this member is not inside a member (only 
+			 * applies for methods), which is not allowed unless with not yet supported 
+			 * anonymous classes for example usually used for adding listeners. 
 			 */
 			if (memberMatcher.find() && !isMember) {
 				openedCurlyBrackets = 0;

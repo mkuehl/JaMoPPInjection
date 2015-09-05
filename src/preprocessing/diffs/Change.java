@@ -11,15 +11,7 @@ import java.util.regex.Pattern;
 public class Change {
 
 	// contains the class/file name
-<<<<<<< HEAD
 	private String qualifiedClassName;
-=======
-<<<<<<< HEAD
-	private String qualifiedClassName;
-=======
-	private String className;
->>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
->>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 	// Marks the beginning line of the respective changes
 	private int beginningLine;
 	// Flags if the respective change is a modification, removal or an addition
@@ -29,22 +21,13 @@ public class Change {
 	private String changes;
 	
 	public Change() {
-<<<<<<< HEAD
 		qualifiedClassName = "";
-=======
-<<<<<<< HEAD
-		qualifiedClassName = "";
-=======
-		className = "";
->>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
->>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 		beginningLine = -1;
 		addRem = -128;
 		typeOfChange = null;
 		changes = null;
 	}
 	
-<<<<<<< HEAD
 	/**
 	 * Parameterized constructor. If p_qualifiedClassName or p_typeOfChange do not correspond
 	 * to their respective keyword catalogue, they are simply not set.
@@ -65,57 +48,10 @@ public class Change {
 	public Change(String p_qualifiedClassName, int p_beginningLine, byte p_addRem, 
 			String p_typeOfChange, String p_changes) {
 		setQualifiedClassName(p_qualifiedClassName);
-=======
-<<<<<<< HEAD
-	public Change(String p_qualifiedClassName, byte p_addRem, int p_beginningLine, String p_changes) {
-		qualifiedClassName = p_qualifiedClassName;
-=======
-	public Change(String p_className, byte p_addRem, int p_beginningLine, String p_changes) {
-		className = p_className;
->>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
-		addRem = p_addRem;
->>>>>>> dcd1a3b06a7c10071d7c4811488003e91ce11a3b
 		beginningLine = p_beginningLine;
 		addRem = p_addRem;
 		setTypeOfChange(p_typeOfChange);
 		changes = p_changes;
-	}
-	
-<<<<<<< HEAD
-	public void setQualifiedClassName(String p_qualifiedClassName) {
-		qualifiedClassName = p_qualifiedClassName;
-	}
-	
-	/**
-	 * Returns package and classname.
-	 * @return
-	 */
-	public String getQualifiedClassName() {
-		return qualifiedClassName;
-	}
-	
-	/**
-	 * Returns class name only.
-	 * @return
-	 */
-	public String getClassName() {
-		return qualifiedClassName.substring(qualifiedClassName.lastIndexOf(".")+1, qualifiedClassName.length());
-	}
-	
-	/**
-	 * Returns fully qualified package name only.
-	 * @return
-	 */
-	public String getPackageName() {
-		return qualifiedClassName.substring(0, qualifiedClassName.lastIndexOf("."));
-=======
-	public void setClassFile(String p_className) {
-		className = p_className;
-	}
-	
-	public String getClassName() {
-		return className;
->>>>>>> d299962c6699a7899a042184feb16b9d25c6636b
 	}
 	
 	/**

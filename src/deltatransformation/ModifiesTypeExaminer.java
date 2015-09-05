@@ -24,7 +24,11 @@ public class ModifiesTypeExaminer {
 				eom = factory.createRemovesImport();
 			}
 		} else if (modifyingCode.contains("implements")) {
-			eom = factory.createModifiesInterface();
+			if (addRem.equals("main")) {
+				eom = factory.createAddsInterfacesList();
+			} else if (addRem.equals("mrin")) {
+				eom = factory.createRemovesInterfacesList();
+			}
 			
 			//for interfaces
 //			AddsInterfacesList interfaces = factory.createAddsInterfacesList();
@@ -88,14 +92,14 @@ public class ModifiesTypeExaminer {
 			} else if (addRem < 0) {
 				return "mrim";
 			}
-		} else if (modifiedCodeLine.contains("implements")) {
+		} else if (modifiedCodeLine.contains("interfaces")) {
 			// there is no modifies interface
 			if (addRem > 0) {
 				return "main"; 
 			} else if (addRem < 0) {
 				return "mrin";
 			}
-		} else if (modifiedCodeLine.contains("extends")) {
+		} else if (modifiedCodeLine.contains("superclass")) {
 			if (addRem > 0) {
 				return "masc"; 
 			} else if (addRem < 0) {

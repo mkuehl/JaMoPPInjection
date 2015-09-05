@@ -192,6 +192,7 @@ public class DiffPreprocessor {
 			else if (!commitPart.startsWith("[PATCH]")) {
 				Change change = new Change();
 				
+				// TODO Classes are not added correctly if not in the coredelta!
 				if (ClassAdditionExaminer.isWholeClassAdded(commitPart)) {
 					change.setAddRem((byte) 1);
 					change.setTypeOfChange("a");
@@ -219,6 +220,7 @@ public class DiffPreprocessor {
 				qualifiedClassName = extractQualifiedClassName(commitPart);
 				lines = commitPart.split("\\r?\\n");
 				alreadyAdded = false;
+				lineBeforeWasAdded = 'u';
 				for (String line : lines) {
 					/*
 					 * Necessary because a lot of lines have to be obtained to get the fully qualified name
@@ -227,7 +229,6 @@ public class DiffPreprocessor {
 					 */
 					if (!(line.startsWith("+") || line.startsWith("-") || line.equals(lines[lines.length-1]))) {
 
-						lineBeforeWasAdded = 'u';
 						/*
 						 *  if there have been changes before, add, if new mods are of different kind,
 						 *  e.g. first added, then removed.

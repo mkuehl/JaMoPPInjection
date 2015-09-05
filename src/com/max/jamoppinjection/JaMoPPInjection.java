@@ -39,7 +39,7 @@ public class JaMoPPInjection {
 		// create code base to which later changes shall be applied
 		// TODO adjust name and path to your flavor and system
 		gcl.getRepo("E:\\programmaticallyCreatedGitRepo\\", "https://github.com/mkuehl/TestRepo.git");
-		gcl.extractCodeBase("E:\\programmaticallyCreatedGitRepo\\", "HEAD~10", /*"Printer.java"*/"");
+		gcl.extractCodeBase("E:\\programmaticallyCreatedGitRepo\\", "HEAD~11", /*"Printer.java"*/"");
 		diffPre.setInput(gcl.getCodeBase());
 		diffPre.preprocessCodeBase();
 		
@@ -93,7 +93,7 @@ public class JaMoPPInjection {
 //				printString(comments);
 
 //				diffPre.resetPrepDiff();
-				gcl.executeDiff("E:\\programmaticallyCreatedGitRepo", 10, 0, "");
+				gcl.executeDiff("E:\\programmaticallyCreatedGitRepo", 11, 0, "");
 				diffPre.setInput(gcl.getDiff());
 				diffPre.separateChanges();
 				

@@ -4,24 +4,29 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import deltatransformation.ModifiesTypeExaminer;
 import preprocessing.diffs.Change;
 import preprocessing.diffs.Changes;
 import preprocessing.diffs.PreprocessedDiff;
+import projecttree.Node;
+import projecttree.NodeType;
+import deltatransformation.ModifiesTypeExaminer;
 
 public class DiffPreprocessor {
 
 	private String input;
 	private PreprocessedDiff prepDiff;
 	private LinkedList<Changes> changesList;
+	private Node root;
 	
 	public DiffPreprocessor() {
 		prepDiff = new PreprocessedDiff();
 		changesList = new LinkedList<Changes>();
+		root = new Node("ProjectRoot", NodeType.PROJECT);
 	}
 	
 	public boolean readFile(String pathToFile) {
@@ -50,18 +55,13 @@ public class DiffPreprocessor {
 	
 	public void preprocessCodeBase() {
 		input = Cleaner.cleanInput(input);
-		int actualLine = -1,
-			// for getting correct change lines, increments in each iteration. 
-			beginningLine = -1;
-		// for iterating over each line
-		byte addRem = -128;
-		String qualifiedClassName = null;
-		StringBuilder modifications = new StringBuilder();
 		Changes changes = null;
-		String[] lines;
+		Change change = null;
 		String lineInfoRegex = "\\-[\\d]{1,4},[\\d]{1,2}\\s\\+[\\d]{1,4},[\\d]{1,2}";
 		Pattern lineInfoPattern = Pattern.compile(lineInfoRegex);
 		Matcher lineInfoMatcher;
+		DiffAnalyzer da = new DiffAnalyzer();
+		LineChecker lc = new LineChecker();
 		String[] sa = input.split("@@");
 		for (String commitPart: sa) {
 //			System.out.println(commitPart);
@@ -75,7 +75,8 @@ public class DiffPreprocessor {
 			lineInfoMatcher = lineInfoPattern.matcher(commitPart);
 			// if line information is given, beginning line is set to the beginning of the listing.
 			if (lineInfoMatcher.find()) {
-				actualLine = Integer.parseInt(commitPart.substring(commitPart.indexOf("+"), commitPart.lastIndexOf(",")));
+//				actualLine = Integer.parseInt(commitPart.substring(commitPart.indexOf("+"), commitPart.lastIndexOf(",")));
+				continue;
 			}
 			// if no line info found, code base is reached.
 			else {
@@ -83,36 +84,90 @@ public class DiffPreprocessor {
 				if (!commitPart.contains("package")) {
 					continue;
 				}
-				lines = commitPart.split("\\r?\\n");
-				for (String line : lines) {
-					if (line.contains("package")) {
-						qualifiedClassName = line.substring(line.lastIndexOf("package") + 8, line.indexOf(";"));
-					} else if (line.contains("class")) {
-						qualifiedClassName += "." + line.substring(line.lastIndexOf("class")+6, line.indexOf(" {"));
-					}
-					if (line.equals("\\ No newline at end of file") || line.equals(lines[lines.length-1])) {
-						break;
-					}
-					// addition
-					if (line.startsWith("+")) {
-						// necessary for additions directly succeeding removals
+				da.analyzeDiff(commitPart, root);
+				if (lc.isWholeClass(commitPart)) {
+					// may return null, if there are different types of lines (existent, removed, added)
+					change = separateWholeClass(commitPart);
+					if (change == null) {
+						continue;
+					} else {
 						if (changes == null) {
 							changes = new Changes();
 						}
-						if (addRem == -128) {
-							addRem = 1;
-							beginningLine = actualLine;
-						}
-						modifications.append(line.substring(1) + (line.endsWith("\n") ? "" : "\n"));
+						changes.add(change);
+						changesList.add(changes);
 					}
 				}
-				changes.add(new Change(qualifiedClassName, beginningLine, addRem, "a", 
-						modifications.toString()));
-				modifications.delete(0, modifications.length());
-				changesList.add(changes);
 			}
 		}
 		prepDiff.setModificationList(changesList);
+	}
+	
+	/**
+	 * Iterates over all lines adding the lines to the returned Change object. If not all lines have the same 
+	 * modification operator (+ or -) null is returned. 
+	 * @param diffCode
+	 * @return
+	 */
+	private Change separateWholeClass(String diffCode) {
+		int actualLine = -1,
+			// for getting correct change lines, increments in each iteration. 
+			beginningLine = -1;
+		// for iterating over each line
+		byte addRem = -128;
+		boolean firstLine = true;
+		String addRemCodeword = "";
+		String qualifiedClassName = null;
+		StringBuilder modifications = new StringBuilder();
+		Changes changes = null;
+		String[] lines = diffCode.split("\\r?\\n");
+		for (String line : lines) {
+			if (firstLine && line.equals("")) {
+				firstLine = false;
+				continue;
+			}
+			if (line.contains("package")) {
+				qualifiedClassName = line.substring(line.lastIndexOf("package") + 8, line.indexOf(";"));
+			} else if (line.contains("class")) {
+				qualifiedClassName += "." + line.substring(line.lastIndexOf("class")+6, line.indexOf(" {"));
+			}
+			// addition, addRem for the case, that there exist added and removed lines and thus not the whole class is affected.
+			if (line.startsWith("+")) {
+				if (addRem == -1) {
+					return null;
+				}
+				// necessary for additions directly succeeding removals
+				if (changes == null) {
+					changes = new Changes();
+				}
+				if (addRem == -128) {
+					addRem = 1;
+					addRemCodeword = "a";
+					beginningLine = actualLine;
+				}
+				modifications.append(line.substring(1) + (line.endsWith("\n") ? "" : "\n"));
+			} else if (line.startsWith("-")) {
+				if (addRem == 1) {
+					return null;
+				}
+				// necessary for additions directly succeeding removals
+				if (changes == null) {
+					changes = new Changes();
+				}
+				if (addRem == -128) {
+					addRem = -1;
+					addRemCodeword = "r";
+					beginningLine = actualLine;
+				}
+				modifications.append(line.substring(1) + (line.endsWith("\n") ? "" : "\n"));
+			} else if (line.equals("\\ No newline at end of file") || line.equals(lines[lines.length-1])) {
+				break;
+			} else {
+				return null;
+			}
+		}
+		return new Change(qualifiedClassName, beginningLine, addRem, 
+				addRemCodeword, true, modifications.toString());
 	}
 	
 	/**
@@ -139,6 +194,7 @@ public class DiffPreprocessor {
 		 */
 		char lineBeforeWasAdded = 'u';
 		String lineBefore = null;
+		DiffAnalyzer da = new DiffAnalyzer();
 		LineChecker lc = new LineChecker();
 		StringBuilder modifications = new StringBuilder();
 		Changes changes = null;
@@ -191,15 +247,16 @@ public class DiffPreprocessor {
 			// if no line info found, check if commitPart starts with "[PATCH]", if not, iterate over lines.
 			else if (!commitPart.startsWith("[PATCH]")) {
 				Change change = new Change();
+				da.analyzeDiff(commitPart, root);
 				
 				// TODO Classes are not added correctly if not in the coredelta!
-				if (ClassAdditionExaminer.isWholeClassAdded(commitPart)) {
-					change.setAddRem((byte) 1);
-					change.setTypeOfChange("a");
-				} else if (ClassAdditionExaminer.isWholeClassRemoved(commitPart)) {
-					change.setAddRem((byte) -1);
-					change.setTypeOfChange("r");
-				}
+//				if (ClassAdditionExaminer.isWholeClassAdded(commitPart)) {
+//					change.setAddRem((byte) 1);
+//					change.setTypeOfChange("a");
+//				} else if (ClassAdditionExaminer.isWholeClassRemoved(commitPart)) {
+//					change.setAddRem((byte) -1);
+//					change.setTypeOfChange("r");
+//				}
 				/* 
 				 * if commitPart contains no package name, the changes can not be assigned to a specific class since 
 				 * in DeltaJ class names have to be qualified.
@@ -218,6 +275,20 @@ public class DiffPreprocessor {
 				}
 
 				qualifiedClassName = extractQualifiedClassName(commitPart);
+
+				if (lc.isWholeClass(commitPart)) {
+					// may return null, if there are different types of lines (existent, removed, added)
+					Change c = separateWholeClass(commitPart);
+					if (c == null) {
+						continue;
+					}
+					if (changes == null) {
+						changes = new Changes();
+					}
+					changes.add(c);
+					changesList.add(changes);
+					continue;
+				}
 				lines = commitPart.split("\\r?\\n");
 				alreadyAdded = false;
 				lineBeforeWasAdded = 'u';
@@ -237,8 +308,13 @@ public class DiffPreprocessor {
 								modifications.length() > 0) {
 							// if before something was added and now is removed, add the additions first, same applies for removals succeeded by additions.
 							if ((addRem == 1 && line.startsWith("-")) || (addRem == -1 && line.startsWith("+"))) {
+
+								beginningLine = getBeginningLineOfChange(commitPart, modifications.toString());
+//								beginningLine = commitPart.substring(0, commitPart.indexOf(
+//										modifications.toString().substring(0, modifications.toString().indexOf("\\n"))))
+//										.split("\\n").length-1;
 								changes.add(createChange(addRem, beginningLine, qualifiedClassName, 
-										modifications.toString()));
+										false, modifications.toString()));
 								modifications.delete(0, modifications.length());
 								addRem = -128;
 							}
@@ -277,16 +353,25 @@ public class DiffPreprocessor {
 									if (temp.contains("extends")) {
 										superclass = lc.getSuperclassFromLineArray(tempArray);
 										if (superclass != "") {
+
+											beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("superclass ", "extends "));
+//											beginningLine = commitPart.substring(0, commitPart.indexOf(
+//												superclass.replace("superclass ", "extends ")))
+//												.split("\\n").length-1;
 											changes.add(createChange((byte) 1, beginningLine, qualifiedClassName, 
-													superclass));
+													false, superclass));
 											alreadyAdded = true;
 										}
 									}
 									if (temp.contains("implements")) {
 										interfaces = lc.getInterfacesFromLineArray(tempArray);
 										if (interfaces != "") {
+											beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("interfaces ", "implements "));
+//											beginningLine = commitPart.substring(0, commitPart.indexOf(
+//													interfaces.replace("interfaces ", "implements ")))
+//													.split("\\n").length-1;
 											changes.add(createChange((byte) 1, beginningLine, qualifiedClassName, 
-														interfaces));
+														false, interfaces));
 											alreadyAdded = true;
 										}
 									}
@@ -298,16 +383,25 @@ public class DiffPreprocessor {
 									if (line.contains("extends")) {
 										superclass = lc.getSuperclassFromLineArray(tempArray);
 										if (superclass != "") {
+											beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("superclass ", "extends "));
+//											beginningLine = commitPart.substring(0, commitPart.indexOf(
+//													superclass.replace("superclass ", "extends ")))
+//													.split("\\n").length-1;
 											changes.add(createChange((byte) -1, beginningLine, qualifiedClassName, 
-													superclass));
+													false, superclass));
 											alreadyAdded = true;
 										}
 									}
 									if (temp.contains("implements")) {
 										interfaces = lc.getInterfacesFromLineArray(tempArray);
 										if (!interfaces.equals("")) {
+
+											beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("interfaces ", "implements "));
+//											beginningLine = commitPart.substring(0, commitPart.indexOf(
+//													interfaces.replace("interfaces ", "implements ")))
+//													.split("\\n").length-1;
 											changes.add(createChange((byte) -1, beginningLine, qualifiedClassName, 
-														interfaces));
+														false, interfaces));
 											alreadyAdded = true;
 										}
 									}
@@ -322,8 +416,10 @@ public class DiffPreprocessor {
 							}
 							if (modifications != null && modifications.toString() != "" && 
 									modifications.length() > 0) {
+
+								beginningLine = getBeginningLineOfChange(commitPart, modifications.toString());
 								changes.add(createChange(addRem, beginningLine, qualifiedClassName, 
-										modifications.toString()));
+										false, modifications.toString()));
 								modifications.delete(0, modifications.length());
 								addRem = -128;
 							}
@@ -342,12 +438,13 @@ public class DiffPreprocessor {
 //								addRem = 1;
 //							}
 							addRem = 1;
-							beginningLine = actualLine;
+//							beginningLine = actualLine;
 						}
+						// if changes have been already added (for interfaces and superclasses) don't add them again
 						if (!alreadyAdded) {
 							modifications.append(line.substring(1) + (line.endsWith("\n") ? "" : "\n"));
-							alreadyAdded = false;
 						} 
+						alreadyAdded = false;
 					}
 					// removal
 					else if (line.startsWith("-") && !line.startsWith("\"", 1)) {
@@ -356,6 +453,7 @@ public class DiffPreprocessor {
 						 *  they must be added first. 
 						 */
 						if (lineBeforeWasAdded == 'a') {
+							// Attention! Removals of interfaces and superclasses are treated in addition case!
 							if (changes == null) {
 								changes = new Changes();
 							}
@@ -371,8 +469,10 @@ public class DiffPreprocessor {
 							if (changes == null) {
 								changes = new Changes();
 							}
+
+							beginningLine = getBeginningLineOfChange(commitPart, modifications.toString());
 							change = createChange(addRem, beginningLine, qualifiedClassName, 
-									modifications.toString());
+									false, modifications.toString());
 							modifications.delete(0, modifications.length());
 							addRem = -128;
 						}
@@ -391,9 +491,15 @@ public class DiffPreprocessor {
 						if (addRem != -128 && !modifications.toString().equals("")) {
 							if (changes == null) {
 								changes = new Changes();
-							}
+							}	
+
+							beginningLine = getBeginningLineOfChange(commitPart, modifications.toString());
+//							beginningLine = commitPart.substring(0, commitPart.indexOf(
+//									modifications.toString().substring(0, modifications.toString().indexOf("\\n"))))
+//									.split("\\n").length-1;
+
 							change = createChange(addRem, beginningLine, qualifiedClassName, 
-									modifications.toString());
+									false, modifications.toString());
 							modifications.delete(0, modifications.length());
 							addRem = -128;
 							lineBeforeWasAdded = 'u';
@@ -430,6 +536,20 @@ public class DiffPreprocessor {
 		prepDiff.setModificationList(changesList);
 	}
 	
+	private int getBeginningLineOfChange(String commitPart, String modifications) {
+		String mods = modifications.trim();
+		String innersubstring = "";
+		if (mods.contains("\n")) {
+			innersubstring = mods.substring(0, mods.indexOf("\n"));
+		} else {
+			innersubstring = mods;
+		}
+		int indexddd = commitPart.indexOf(innersubstring);
+		String outersubstring = commitPart.substring(0, indexddd);
+		String[] ttta = outersubstring.split("\\n");
+		return ttta.length;
+	}
+	
 	private String extractQualifiedClassName(String classCode) {
 		String qualifiedClassName = "";
 		String packageRegex = "(package\\s([a-zA-Z0-9_]+[\\.]?)+;)";
@@ -450,11 +570,13 @@ public class DiffPreprocessor {
 		return qualifiedClassName;
 	}
 	
-	private Change createChange(byte addRem, int beginningLine, String qualifiedClassName, 
+	private Change createChange(byte addRem, int beginningLine, String qualifiedClassName, boolean isWholeClass,
 			String modifications) {
 
 		ModifiesTypeExaminer mte = new ModifiesTypeExaminer();
 		Change change = new Change();
+		
+		change.setTypeOfChange(getModifiedMethod(root, beginningLine, modifications.split("\\n").length, qualifiedClassName));
 		
 		change.setAddRem(addRem);
 		if (change.getTypeOfChange() == null || change.getTypeOfChange() == "") {
@@ -462,6 +584,7 @@ public class DiffPreprocessor {
 		}
 		change.setBeginningLine(beginningLine);
 		change.setQualifiedClassName(qualifiedClassName);
+		change.setIsWholeClass(isWholeClass);
 		// if actual changes are null, take "" + mods
 		change.setChanges((change.getChanges() == null ? "" : change.getChanges())
 				+ modifications.toString());
@@ -472,6 +595,41 @@ public class DiffPreprocessor {
 			change.setChanges(change.getChanges().replace("extends ", "").trim());
 		}
 		return change;
+	}
+	
+	/**
+	 * Searches the given ProjectTree for a match of the given line numbers and the numbers of all methods of the specified class.
+	 * @param root
+	 * @param beginningLine
+	 * @param length
+	 * @param qualifiedClassName
+	 * @return
+	 */
+	private String getModifiedMethod(Node root, int beginningLine, int length, String qualifiedClassName) {
+		String packageName = qualifiedClassName.substring(0, qualifiedClassName.lastIndexOf(".")),
+			   className = qualifiedClassName.substring(qualifiedClassName.lastIndexOf(".")+1);
+		HashSet<Node> packages = root.getAllChildren();
+		for (Node pack : packages) {
+			if (pack.getName().equals(packageName)) {
+				HashSet<Node> classes = pack.getAllChildren();
+				for (Node c : classes) {
+					if (c.getName().equals(className)) {
+						HashSet<Node> methods = c.getAllChildrenOfType(NodeType.METHOD);
+						for (Node method : methods) {
+							int startline = method.getBeginningLine()+1,
+								endline = method.getBeginningLine()+method.getLength();
+							//TODO beginning line in project tree not set correctly
+							// following standard formatting, the new lines begin either at the line following the signature or at the line preceding the last "}".
+							if (endline == beginningLine || startline == beginningLine) {
+								method.setLength(method.getLength()+length);
+								return method.getName();
+							}
+						}
+					}
+				}
+			}
+		}
+		return "";
 	}
 	
 	/**

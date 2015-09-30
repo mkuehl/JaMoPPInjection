@@ -1,0 +1,7 @@
+package projecttree;
+
+public enum NodeType {
+
+	PROJECT, PACKAGE, CLASS, INTERFACE, IMPORT, SUPERCLASS, IMPLEMENTS, METHOD, PARAMETER, FIELD
+
+}

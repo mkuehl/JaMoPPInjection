@@ -17,6 +17,7 @@ public class Change {
 	// Flags if the respective change is a modification, removal or an addition
 	private byte addRem;
 	private String typeOfChange;
+	private boolean isWholeClass;
 	// Contains the changes
 	private String changes;
 	
@@ -25,6 +26,7 @@ public class Change {
 		beginningLine = -1;
 		addRem = -128;
 		typeOfChange = null;
+		isWholeClass = false;
 		changes = null;
 	}
 	
@@ -46,11 +48,12 @@ public class Change {
 	 * @param p_changes
 	 */
 	public Change(String p_qualifiedClassName, int p_beginningLine, byte p_addRem, 
-			String p_typeOfChange, String p_changes) {
+			String p_typeOfChange, boolean p_isWholeClass, String p_changes) {
 		setQualifiedClassName(p_qualifiedClassName);
 		beginningLine = p_beginningLine;
 		addRem = p_addRem;
 		setTypeOfChange(p_typeOfChange);
+		isWholeClass = p_isWholeClass;
 		changes = p_changes;
 	}
 	
@@ -151,6 +154,14 @@ public class Change {
 	public String getTypeOfChange() {
 		return typeOfChange;
 	}
+	
+	public void setIsWholeClass(boolean p_isWholeClass) {
+		isWholeClass = p_isWholeClass;
+	}
+	
+	public boolean getIsWholeClass() {
+		return isWholeClass;
+	}
 
 	/**
 	 * Adds code changes as String. If empty, nothing is added.
@@ -192,11 +203,12 @@ public class Change {
 	 * @param change
 	 */
 	public void setChange(String p_qualifiedClassName, int beginningLine, byte addRem, 
-			String p_typeOfChange, String changes) {
+			String p_typeOfChange, boolean p_isWholeClass, String changes) {
 		setQualifiedClassName(p_qualifiedClassName);
 		setBeginningLine(beginningLine);
 		setAddRem(addRem);
 		setTypeOfChange(p_typeOfChange);
+		setIsWholeClass(p_isWholeClass);
 		setChanges(changes);
 	}
 	

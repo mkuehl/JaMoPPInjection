@@ -76,7 +76,7 @@ public class GitConnectorCmdL {
 	 * @param latestCommitHash - either hash or HEAD~i, where i is the number of steps to take back from HEAD
 	 * @param optionalClass - if just changes for a particular class are required. Otherwise use ""
 	 */
-	public void extractCodeBase(String pathToDir, String latestCommitHash, String optionalClass) {
+	public void extractBaseline(String pathToDir, String latestCommitHash, String optionalClass) {
 		Process p = null;
 		File repoDirectory = new File(pathToDir);
 		String initialCommitHash = "";
@@ -124,7 +124,7 @@ public class GitConnectorCmdL {
 //		String[] command = {"cmd", "/c", "dir", "/a:-d", pathToDir};
 		String range = "HEAD~" + startNumberOfCommitFromHEAD + "..HEAD~" + endNumberOfCommitFromHEAD;
 		// set git programm location, command, options
-		String[] logCommand = {"E:\\Program Files (x86)\\Git\\bin\\git.exe", "log", "-p", "-U10000", "--pretty=email", range, 
+		String[] logCommand = {"E:\\Program Files (x86)\\Git\\bin\\git.exe", "log", "-p", "-U10000", "--pretty=email", "--reverse", range, 
 				optionalClass};
 //		for (String l : logCommand) {
 //			System.out.println(l);

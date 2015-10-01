@@ -3,6 +3,8 @@ package preprocessing.diffs;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import preprocessing.diffpreprocessor.ModificationType;
+
 /**
  * This class is designed for represent all changes affecting the specified class.
  * @author Max
@@ -16,8 +18,11 @@ public class Change {
 	private int beginningLine;
 	// Flags if the respective change is a modification, removal or an addition
 	private byte addRem;
-	private String typeOfChange;
+//	private String typeOfChange;
+	private ModificationType typeOfChange;
 	private boolean isWholeClass;
+	private boolean isMethodModifiedAtStart;
+	private String modifiedMethod;
 	// Contains the changes
 	private String changes;
 	
@@ -27,6 +32,8 @@ public class Change {
 		addRem = -128;
 		typeOfChange = null;
 		isWholeClass = false;
+		setIsMethodModifiedAtStart(false);
+		setModifiedMethod("#none");
 		changes = null;
 	}
 	
@@ -48,7 +55,7 @@ public class Change {
 	 * @param p_changes
 	 */
 	public Change(String p_qualifiedClassName, int p_beginningLine, byte p_addRem, 
-			String p_typeOfChange, boolean p_isWholeClass, String p_changes) {
+			ModificationType p_typeOfChange, boolean p_isWholeClass, String p_changes) {
 		setQualifiedClassName(p_qualifiedClassName);
 		beginningLine = p_beginningLine;
 		addRem = p_addRem;
@@ -145,13 +152,13 @@ public class Change {
 	 * mrim = remove import, mrin = remove interfaces list.
 	 * @param p_typeOfChange
 	 */
-	public void setTypeOfChange(String p_typeOfChange) {
-		if (typeOfChangeValidator(p_typeOfChange)) {
+	public void setTypeOfChange(ModificationType p_typeOfChange) {
+//		if (typeOfChangeValidator(p_typeOfChange)) {
 			typeOfChange = p_typeOfChange;
-		}
+//		}
 	}
 	
-	public String getTypeOfChange() {
+	public ModificationType getTypeOfChange() {
 		return typeOfChange;
 	}
 	
@@ -161,6 +168,23 @@ public class Change {
 	
 	public boolean getIsWholeClass() {
 		return isWholeClass;
+	}
+	
+
+	public boolean getIsMethodModifiedAtStart() {
+		return isMethodModifiedAtStart;
+	}
+
+	public void setIsMethodModifiedAtStart(boolean isMethodModifiedAtStart) {
+		this.isMethodModifiedAtStart = isMethodModifiedAtStart;
+	}
+
+	public String getModifiedMethod() {
+		return modifiedMethod;
+	}
+
+	public void setModifiedMethod(String modifiedMethod) {
+		this.modifiedMethod = modifiedMethod;
 	}
 
 	/**
@@ -203,7 +227,7 @@ public class Change {
 	 * @param change
 	 */
 	public void setChange(String p_qualifiedClassName, int beginningLine, byte addRem, 
-			String p_typeOfChange, boolean p_isWholeClass, String changes) {
+			ModificationType p_typeOfChange, boolean p_isWholeClass, String changes) {
 		setQualifiedClassName(p_qualifiedClassName);
 		setBeginningLine(beginningLine);
 		setAddRem(addRem);
@@ -228,18 +252,18 @@ public class Change {
 		return m.matches();
 	}
 	
-	/**
-	 * Checks if the String typeOfChange matches its designated form.
-	 * @param p_typeOfChange
-	 * @return true, if the p_typeOfChange matches a defined modification keyword.
-	 */
-	private boolean typeOfChangeValidator(String p_typeOfChange) {
-		if (p_typeOfChange == null) {
-			return false;
-		}
-		String regex = "(a|r|m(am|aim|ain|asc|mm|mf|mp|msc|rm|rf|rim|rin))";
-		Pattern p = Pattern.compile(regex);
-		Matcher m = p.matcher(p_typeOfChange);
-		return m.matches();
-	}
+//	/**
+//	 * Checks if the String typeOfChange matches its designated form.
+//	 * @param p_typeOfChange
+//	 * @return true, if the p_typeOfChange matches a defined modification keyword.
+//	 */
+//	private boolean typeOfChangeValidator(String p_typeOfChange) {
+//		if (p_typeOfChange == null) {
+//			return false;
+//		}
+//		String regex = "(a|r|m(am|aim|ain|asc|mm|mf|mp|msc|rm|rf|rim|rin))";
+//		Pattern p = Pattern.compile(regex);
+//		Matcher m = p.matcher(p_typeOfChange);
+//		return m.matches();
+//	}
 }

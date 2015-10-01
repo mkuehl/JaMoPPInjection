@@ -114,7 +114,7 @@ public class DiffAnalyzer {
 		while(m.find()) {
 			String t = m.group();
 			// -1 due to the linebreak of the last line.
-			int beginningLine = tempDiff.substring(0, m.end()).split("\\n").length-1;
+			int beginningLine = ((tempDiff.substring(0, m.end())).split("\\n")).length-1;
 			// -1 because first line is counted.
 			int length = getLengthOfMember(tempDiff.substring(m.end()))-1;
 			// methods might have two space characters. If so, extract the name from the second, if not, extract it from the first.

@@ -4,10 +4,12 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import preprocessing.diffpreprocessor.ModificationType;
+
 public class MemberSeparator {
 
 	// separates all members within the given String. A member is a Field or a Method.
-	public LinkedList<String> separateMembers(String allMembers, String typeOfChange) {
+	public LinkedList<String> separateMembers(String allMembers, ModificationType typeOfChange) {
 		LinkedList<String> separatedMembers = new LinkedList<String>();
 		// Gets filled with the members signature and body. For methods, this takes several iterations.
 		String member = "";
@@ -38,7 +40,7 @@ public class MemberSeparator {
 		int openedCurlyBrackets = 0,
 			closedCurlyBrackets = 0;
 		
-		if (typeOfChange.equals("main") || typeOfChange.equals("masc")) {
+		if (typeOfChange == ModificationType.ADDSINTERFACE || typeOfChange == ModificationType.ADDSSUPERCLASS) {
 			separatedMembers.add(allMembers);
 			return separatedMembers;
 		}

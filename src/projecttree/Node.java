@@ -38,20 +38,20 @@ public class Node {
 		return javaType;
 	}
 	
+	public void setBeginningLine(int p_beginningLine) {
+		beginningLine = p_beginningLine;
+	}
+	
+	public int getBeginningLine() {
+		return beginningLine;
+	}
+	
 	public void setLength(int p_length) {
 		length = p_length;
 	}
 	
 	public int getLength() {
 		return length;
-	}
-	
-	public void setBeginningLine(int p_beginningLine) {
-		length = p_beginningLine;
-	}
-	
-	public int getBeginningLine() {
-		return beginningLine;
 	}
 	
 	public void setType(NodeType p_type) {

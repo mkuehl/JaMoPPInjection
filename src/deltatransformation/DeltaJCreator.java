@@ -26,6 +26,7 @@ import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.emftext.language.java.resource.java.util.JavaResourceUtil;
 
+import preprocessing.diffpreprocessor.ModificationType;
 import preprocessing.diffs.Change;
 
 import com.max.jamoppinjection.ChangesValidator;
@@ -125,12 +126,12 @@ public class DeltaJCreator {
 	 * 			  numbers mean addition, negative removal and zero modification. 
 	 */
 	public void addJavaUnit(Delta parent, EObject jamoppParsedClass, String packageName, String className, 
-			byte addRem, String typeOfChange) {
+			byte addRem, ModificationType typeOfChange) {
 		if (typeOfChange.equals("a")) {
 			// Trigger transformation of JaMoPP to DeltaJ AST
 			JavaCompilationUnit jcu = fancyJamoppToDeltaJTransformation(jamoppParsedClass);
 			addJavaAddsUnit(parent, jcu);
-		} else if (typeOfChange.startsWith("m")) {
+		} else if (typeOfChange != ModificationType.CLASSADDITION && typeOfChange != ModificationType.CLASSREMOVAL) {
 			addJavaModifiesUnit(parent, typeOfChange, jamoppParsedClass);
 		}
 	}
@@ -147,7 +148,7 @@ public class DeltaJCreator {
 		// Nothing will be returned because we don't need to add anything here.
 	}
 	
-	private void addJavaModifiesUnit(Delta parent, String typeOfChange, EObject ast) {
+	private void addJavaModifiesUnit(Delta parent, ModificationType typeOfChange, EObject ast) {
 		ModifiesTypeExaminer mte = new ModifiesTypeExaminer();
 		ModifiesUnit mu = factory.createModifiesUnit();
 		// represents the ModifiesType. Can be ModifiesAction but ModifiesImport, ModifiesInterface, ... as well.

@@ -8,25 +8,27 @@ import org.deltaj.deltaJ.Source;
 import org.deltaj.deltaJ.Sources;
 import org.eclipse.emf.ecore.EObject;
 
+import preprocessing.diffpreprocessor.ModificationType;
+
 public class ModifiesTypeExaminer {
 
 	private DeltaJFactory factory = DeltaJFactory.eINSTANCE;
 
-	protected EObject examineModifiesType(String addRem, String modifyingCode) {
+	protected EObject examineModifiesType(ModificationType addRem, String modifyingCode) {
 		EObject eom = null;
 		if (modifyingCode.contains("import")) {
-			if (addRem.equals("maim")) {
+			if (addRem == ModificationType.ADDSIMPORT) {
 				// for adding imports
 				eom = factory.createAddsImport();
 //				ImportDeclaration impdec = factory.createImportDeclaration();
 //				impdec.setName(modifyingCode.trim());
-			} else if (addRem.equals("mrim")) {
+			} else if (addRem == ModificationType.REMOVESIMPORT) {
 				eom = factory.createRemovesImport();
 			}
 		} else if (modifyingCode.contains("implements")) {
-			if (addRem.equals("main")) {
+			if (addRem == ModificationType.ADDSINTERFACE) {
 				eom = factory.createAddsInterfacesList();
-			} else if (addRem.equals("mrin")) {
+			} else if (addRem == ModificationType.REMOVESINTERFACE) {
 				eom = factory.createRemovesInterfacesList();
 			}
 			
@@ -38,23 +40,23 @@ public class ModifiesTypeExaminer {
 //			tl.getTypes().add(t);
 //			interfaces.setInterfaces(tl);
 		} else if (modifyingCode.contains("extends")) {
-			if (addRem.equals("masc")) {
+			if (addRem == ModificationType.ADDSSUPERCLASS) {
 				eom = factory.createAddsSuperclass();
-			} else if (addRem.equals("mmsc")) {
+			} else if (addRem == ModificationType.MODIFIESSUPERCLASS) {
 				eom = factory.createModifiesSuperclass();
-			} else if (addRem.equals("mrsc")) {
+			} else if (addRem == ModificationType.REMOVESSUPERCLASS) {
 				eom = factory.createRemovesSuperclass();
 			}
 		} 
 		// else is for all member declarations
 		else {
 			eom = factory.createModifiesAction();
-			if (addRem.equals("mam")) {
+			if (addRem == ModificationType.ADDSMEMBER) {
 				// for adding class members (methods, fields)
 				eom = factory.createAddsClassBodyMemberDeclaration();
-			} else if (addRem.equals("mrf")) {
+			} else if (addRem == ModificationType.MODIFIESMEMBER) {
 				eom = factory.createRemovesField();
-			} else if (addRem.equals("mrm")) {
+			} else if (addRem == ModificationType.REMOVESMEMBER) {
 				eom = factory.createRemovesMethod();
 			}
 
@@ -84,40 +86,49 @@ public class ModifiesTypeExaminer {
 	 * @param modifiedCodeLine
 	 * @return key word for change computed from both parameters.
 	 */
-	public String examineModifiesType(byte addRem, String modifiedCodeLine) {
+	public ModificationType examineModifiesType(byte addRem, String modifiedCodeLine) {
 		if (modifiedCodeLine.contains("import")) {
 			// there is no modifies import
 			if (addRem > 0) {
-				return "maim"; 
+//				return "maim"; 
+				return ModificationType.ADDSIMPORT;
 			} else if (addRem < 0) {
-				return "mrim";
+//				return "mrim";
+				return ModificationType.REMOVESIMPORT;
 			}
 		} else if (modifiedCodeLine.contains("interfaces")) {
 			// there is no modifies interface
 			if (addRem > 0) {
-				return "main"; 
+//				return "main"; 
+				return ModificationType.ADDSINTERFACE;
 			} else if (addRem < 0) {
-				return "mrin";
+//				return "mrin";
+				return ModificationType.REMOVESINTERFACE;
 			}
 		} else if (modifiedCodeLine.contains("superclass")) {
 			if (addRem > 0) {
-				return "masc"; 
+//				return "masc"; 
+				return ModificationType.ADDSSUPERCLASS;
 			} else if (addRem < 0) {
-				return "mrsc";
+//				return "mrsc";
+				
+				return ModificationType.REMOVESSUPERCLASS;
 			} else {
-				return "mmsc";
+//				return "mmsc";
+				return ModificationType.MODIFIESSUPERCLASS;
 			}
 		} 
 		// if just an empty line is inserted, move on
 		else if (modifiedCodeLine.matches("(\\+|-)(\\t|\\r|\\n)*")) {
-			return "";
+//			return "";
 		} else if (modifiedCodeLine.length()<3) {
-			return "";
+//			return "";
 		}
 		// else is for all member declarations
 		else {
 			if (addRem > 0) {
-				return "mam"; 
+//				return "mam"; 
+				return ModificationType.ADDSMEMBER;
 			} else {
 				// TODO does not support arrays yet!!!
 				/*  optional modifier and mandatory (return) type, type may be everything using 
@@ -134,21 +145,26 @@ public class ModifiesTypeExaminer {
 				// if field is found, return remove or modify field.
 				if (m.find()) {
 					if (addRem < 0) {
-						return "mrf";
+//						return "mrf";
+						return ModificationType.REMOVESMEMBER;
 					} else {
-						return "mmf";
+//						return "mmf";
+						return ModificationType.MODIFIESMEMBER;
 					}
 				}
 				// otherwise return remove or modify method.
 				else {
 					if (addRem < 0) {
-						return "mrm";
+//						return "mrm";
+						return ModificationType.REMOVESMEMBER;
 					} else {
-						return "mmm";
+//						return "mmm";
+						return ModificationType.MODIFIESMEMBER;
 					}
 				}
 			}
 		}
-		return "a";
+//		return "a";
+		return ModificationType.CLASSADDITION;
 	}
 }

@@ -18,6 +18,7 @@ import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.emftext.language.java.resource.java.util.JavaResourceUtil;
 
 import preprocessing.diffpreprocessor.DiffPreprocessor;
+import preprocessing.diffpreprocessor.ModificationType;
 import preprocessing.diffs.Change;
 import preprocessing.diffs.Changes;
 import preprocessing.diffs.PreprocessedDiff;
@@ -40,7 +41,7 @@ public class JaMoPPInjection {
 		// create code base to which later changes shall be applied
 		// TODO adjust name and path to your flavor and system
 		gcl.getRepo("E:\\programmaticallyCreatedGitRepo\\", "https://github.com/mkuehl/TestRepo.git");
-		gcl.extractCodeBase("E:\\programmaticallyCreatedGitRepo\\", "HEAD~"+ headRevision, /*"Printer.java"*/"");
+		gcl.extractBaseline("E:\\programmaticallyCreatedGitRepo\\", "HEAD~"+ headRevision, /*"Printer.java"*/"");
 		diffPre.setInput(gcl.getCodeBase());
 		diffPre.preprocessCodeBase();
 		
@@ -57,7 +58,7 @@ public class JaMoPPInjection {
 //			abstractSyntaxTreeRoots.add(JavaResourceUtil.getResourceContent(code));
 
 			Delta d = djc.createNewDelta(dju, "coredelta" + i++);
-			djc.addJavaUnit(d, JavaResourceUtil.getResourceContent(code), "", "", (byte) 1, "a");
+			djc.addJavaUnit(d, JavaResourceUtil.getResourceContent(code), "", "", (byte) 1, ModificationType.CLASSADDITION);
 			code = "";
 
 			// TODO adjust name and path to your flavor and system
@@ -100,12 +101,15 @@ public class JaMoPPInjection {
 				
 				ChangesValidator cVal = new ChangesValidator();
 				PreprocessedDiff prepDiff = diffPre.getPrepDiff();
-				prepDiff.setToLast();
-				int noPrev = prepDiff.size(),
-					j = 1;
-				while (prepDiff.hasPrevious() || noPrev > 0) {
+//				prepDiff.setToLast();
+//				int noPrev = prepDiff.size(),
+//					j = 1;
+				prepDiff.setToFirst();
+				int size = prepDiff.size(),
+					diffNo = 0;
+				while (prepDiff.hasNext() || diffNo < size) {
 					Changes changes = prepDiff.getChanges();
-					Delta tempDelta = djc.createNewDelta(dju, "Delta" + j++);
+					Delta tempDelta = djc.createNewDelta(dju, "Delta" + ++diffNo);
 					if (changes.size() > 0) {
 						changes.setToFirst();
 						// TODO why are changes not returned correctly??????
@@ -135,8 +139,8 @@ public class JaMoPPInjection {
 
 						djc.write("PrintClassCoreDelta", "E:\\DeltaJ-workspace\\PrintClassDelta");
 					} 
-					prepDiff.previous();
-					noPrev--;
+					prepDiff.next();
+//					noPrev--;
 				}
 	}
 	

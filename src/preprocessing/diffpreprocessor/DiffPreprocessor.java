@@ -4,7 +4,6 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,6 +13,7 @@ import preprocessing.diffs.Changes;
 import preprocessing.diffs.PreprocessedDiff;
 import projecttree.Node;
 import projecttree.NodeType;
+import projecttree.ProjectTreeSearcher;
 import deltatransformation.ModifiesTypeExaminer;
 
 public class DiffPreprocessor {
@@ -85,6 +85,7 @@ public class DiffPreprocessor {
 					continue;
 				}
 				da.analyzeDiff(commitPart, root);
+				showTree(root);
 				if (lc.isWholeClass(commitPart)) {
 					// may return null, if there are different types of lines (existent, removed, added)
 					change = separateWholeClass(commitPart);
@@ -250,7 +251,9 @@ public class DiffPreprocessor {
 			// if no line info found, check if commitPart starts with "[PATCH]", if not, iterate over lines.
 			else if (!commitPart.startsWith("[PATCH]")) {
 				Change change = new Change();
+				root = new Node("ProjectRoot", NodeType.PROJECT);
 				da.analyzeDiff(commitPart, root);
+				showTree(root);
 				
 				// TODO Classes are not added correctly if not in the coredelta!
 //				if (ClassAdditionExaminer.isWholeClassAdded(commitPart)) {
@@ -413,6 +416,7 @@ public class DiffPreprocessor {
 								if (temp.contains("extends") || temp.contains("implements")) {
 									modifications.delete(0, modifications.length());
 								}
+								addRem = -128;
 							}
 							
 							if (changes == null) {
@@ -433,7 +437,7 @@ public class DiffPreprocessor {
 							}
 						}
 						lineBeforeWasAdded = 'a';
-						if (addRem == -128) {
+						if (addRem < 1) {
 							// imports just can be added or removed, thus 0 is not allowed.
 //							if (line.contains("import")) {
 //								addRem = 1;
@@ -602,21 +606,60 @@ public class DiffPreprocessor {
 			String modifications) {
 
 		ModifiesTypeExaminer mte = new ModifiesTypeExaminer();
+		ProjectTreeSearcher pts = new ProjectTreeSearcher();
 		Change change = new Change();
+		Node containingPackage = null,
+			 containingClass = null,
+			 modifiedMethod = null;
+		String modifiedMethodName = null;
 		
-		String modifiedMethod = getModifiedMethod(root, beginningLine, modifications.split("\\n").length, qualifiedClassName);
-		if (!modifiedMethod.equals("#none")) {
-			change.setModifiedMethod(modifiedMethod);
-			change.setTypeOfChange(ModificationType.REMOVESMEMBER);
-		}
 		
-		change.setAddRem(addRem);
-		if (change.getTypeOfChange() == null) {
-			change.setTypeOfChange(mte.examineModifiesType(addRem, modifications.toString()));
-		}
 		change.setBeginningLine(beginningLine);
 		change.setQualifiedClassName(qualifiedClassName);
 		change.setIsWholeClass(isWholeClass);
+
+		change.setAddRem(addRem);
+		if (change.getTypeOfChange() == null) {
+			change.setTypeOfChange(mte.examineModifiesType(addRem, modifications.toString()));
+//		}
+//		
+//		// if a removal, nothing or a modification has been detected.
+//		if (change.getTypeOfChange() == null || (change.getTypeOfChange() == null && 
+//				change.getTypeOfChange().equals(ModificationType.MODIFIESMEMBER))) {
+////			modifiedMethod = containingClass.getChild(name);
+			if (change.getTypeOfChange() != null && change.getTypeOfChange().equals(ModificationType.ADDSFIELD)) {
+				modifiedMethod = pts.getModifiedMethodNode(root, beginningLine, modifications.split("\\n").length, qualifiedClassName);
+				if (modifiedMethod != null) {
+					modifiedMethodName = pts.getModifiedMethodName(root, beginningLine, modifications.split("\\n").length, qualifiedClassName);
+					change.setTypeOfChange(ModificationType.MODIFIESMETHOD);
+					if (modifiedMethodName.substring(modifiedMethodName.length()-2).equals("#s")) {
+						change.setIsMethodModifiedAtStart(true);
+					} else {
+						change.setIsMethodModifiedAtStart(false);
+					}
+					modifiedMethod.setLength((modifications.split("\\n")).length-1);
+				}
+			}
+		} 
+//		if (change.getTypeOfChange() != null && change.getTypeOfChange().equals(ModificationType.ADDSMETHOD)) {
+//			modifiedMethod = pts.getModifiedMethodNode(root, beginningLine, modifications.split("\\n").length, qualifiedClassName);
+//			containingPackage = root.getChild(change.getPackageName());
+//			containingClass = containingPackage.getChild(change.getClassName());
+//			containingClass.addChild(modifiedMethod);
+//		}
+		if (change.getTypeOfChange() != null && change.getTypeOfChange().equals(ModificationType.REMOVESMETHOD)) {
+			modifiedMethod = pts.getModifiedMethodNode(root, beginningLine, modifications.split("\\n").length, qualifiedClassName);
+			containingPackage = root.getChild(change.getPackageName());
+			containingClass = containingPackage.getChild(change.getClassName());
+			containingClass.removeChild(modifiedMethod);
+		}
+		if (modifiedMethod != null && !modifiedMethod.getName().equals("#none")) {
+			change.setModifiedMethod(modifiedMethod.getName());
+		}
+		if (change.getTypeOfChange() == null) {
+			
+		}
+
 		// if actual changes are null, take "" + mods
 		change.setChanges((change.getChanges() == null ? "" : change.getChanges())
 				+ modifications.toString());
@@ -627,46 +670,6 @@ public class DiffPreprocessor {
 			change.setChanges(change.getChanges().replace("extends ", "").trim());
 		}
 		return change;
-	}
-	
-	/**
-	 * Searches the given ProjectTree for a match of the given line numbers and the numbers of all methods of the specified class.
-	 * @param root
-	 * @param beginningLine
-	 * @param length
-	 * @param qualifiedClassName
-	 * @return
-	 */
-	private String getModifiedMethod(Node root, int beginningLine, int length, String qualifiedClassName) {
-		String packageName = qualifiedClassName.substring(0, qualifiedClassName.lastIndexOf(".")),
-			   className = qualifiedClassName.substring(qualifiedClassName.lastIndexOf(".")+1);
-		HashSet<Node> packages = root.getAllChildren();
-		for (Node pack : packages) {
-			if (pack.getName().equals(packageName)) {
-				HashSet<Node> classes = pack.getAllChildren();
-				for (Node c : classes) {
-					if (c.getName().equals(className)) {
-						HashSet<Node> methods = c.getAllChildrenOfType(NodeType.METHOD);
-						for (Node method : methods) {
-							int startline = method.getBeginningLine()+1,
-								endline = method.getBeginningLine()+method.getLength();
-							//TODO beginning line in project tree not set correctly
-							// following standard formatting, the new lines begin either at the line following the signature or at the line preceding the last "}".
-							if (endline == beginningLine) {
-								method.setLength(method.getLength()+length);
-								return method.getName() + "#e";
-							} else if (startline == beginningLine) {
-								method.setLength(method.getLength()+length);
-								return method.getName() + "#s";
-							} else {
-								return "#none";
-							}
-						}
-					}
-				}
-			}
-		}
-		return "";
 	}
 	
 	/**
@@ -689,5 +692,34 @@ public class DiffPreprocessor {
 	        }
 	    }
 	    return dir.delete();
+	}
+	
+	private void showTree(Node root) {	
+		System.out.println("#################################################################################################################################################\n" 
+				+ "#################################################################################################################################################");
+		System.out.println("Project: " + root.getName());
+		for (Node n : root.getAllChildren()) {
+			System.out.println("  Package: " + n.getName());
+			for (Node n2 : n.getAllChildren()) {
+				System.out.println("    Class: " + n2.getName());
+				System.out.println("      Length: " + n2.getLength());
+				for (Node n3 : n2.getAllChildrenOfType(NodeType.METHOD)) {
+					System.out.println("      Method: " + n3.getName());
+					System.out.println("\tReturn Type: " + n3.getJavaType());
+					System.out.println("\tBeginningLine: " + n3.getBeginningLine());
+					System.out.println("\tLength: " + n3.getLength());
+					for (Node n4 : n3.getAllChildrenOfType(NodeType.PARAMETER)) {
+						System.out.println("\tParameter: " + n4.getName() + " ParamType: " + n4.getJavaType());
+					}
+				}
+				for (Node n3 : n2.getAllChildrenOfType(NodeType.FIELD)) {
+					System.out.println("      Field: " + n3.getName());
+					System.out.println("\tType: " + n3.getJavaType());
+					System.out.println("\tBeginningLine: " + n3.getBeginningLine());
+				}
+			}
+		}
+		System.out.println("#################################################################################################################################################\n" 
+				+ "#################################################################################################################################################");
 	}
 }

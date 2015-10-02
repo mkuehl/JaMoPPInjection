@@ -132,8 +132,10 @@ public class JaMoPPInjection {
 							}
 							djc.addToDeltaString(tempDelta, c);
 
-							if (!(c.getChanges().contains("interfaces") || c.getChanges().contains("superclass"))) {
-								djc.closeDeltaString();
+							// interfaces and superclasses have already a semicolon, if the deltastring has one as well, don't close it!
+							if (!(c.getChanges().contains("interfaces") || c.getChanges().contains("superclass")) && 
+									!djc.getDeltaString().endsWith(";")) {
+//								djc.closeDeltaString();
 							}
 						}
 

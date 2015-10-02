@@ -17,6 +17,8 @@ public class Node {
 	public Node(String p_name, NodeType p_type) {
 		name = p_name;
 		type = p_type;
+		beginningLine = -1;
+		length = -1;
 		modifiers = new HashSet<String>();
 		children = new HashSet<Node>();
 		parameters = new HashSet<Node>();
@@ -47,6 +49,15 @@ public class Node {
 	}
 	
 	public void setLength(int p_length) {
+		// if length not set and changed, update subsequent members.
+		if (length > -1 && p_length != length) {
+			boolean linesRemoved = p_length < length;
+			for (Node child : parent.getAllChildren()) {
+				if (child.getType().equals(NodeType.METHOD) || child.getType().equals(NodeType.FIELD)) {
+					updateLinesOfSubsequentMembers(parent, child, linesRemoved);
+				}
+			}
+		} 
 		length = p_length;
 	}
 	
@@ -100,6 +111,12 @@ public class Node {
 	}
 	
 	public void addChild(Node child) {
+		if (isContained(child)) {
+			return;
+		}
+		if (child.getType().equals(NodeType.METHOD) || child.getType().equals(NodeType.FIELD)) {
+//			updateLinesOfSubsequentMembers(this, child, true);
+		}
 		children.add(child);
 	}
 	
@@ -110,7 +127,19 @@ public class Node {
 	public void removeChild(Node child) {
 		if (children.contains(child)) {
 			children.remove(child);
+			if (child.getType().equals(NodeType.METHOD) || child.getType().equals(NodeType.FIELD)) {
+				updateLinesOfSubsequentMembers(this, child, false);
+			}
 		}
+	}
+	
+	public Node getChild(String name) {
+		for (Node n : getAllChildren()) {
+			if (n.getName().equals(name)) {
+				return n;
+			}
+		}
+		return null;
 	}
 	
 	public HashSet<Node> getAllChildren() {
@@ -146,5 +175,32 @@ public class Node {
 			}
 		}
 		return childrenOfType;
+	}
+	
+	public boolean isContained(Node node) {
+		HashSet<Node> members = getAllChildren();
+		for (Node n : members) {
+			if (n.equals(node)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * 
+	 * @param containingClass
+	 * @param affectedMember
+	 * @param removeOrAdd - false = remove, true = add
+	 */
+	private void updateLinesOfSubsequentMembers(Node containingClass, Node affectedMember, boolean removeOrAdd) {
+		int affectedLines = (removeOrAdd ? 1 : -1) * affectedMember.getLength()+1;
+		HashSet<Node> members = containingClass.getAllChildrenOfType(NodeType.METHOD);
+		members.addAll(containingClass.getAllChildrenOfType(NodeType.FIELD));
+		for (Node member : members) {
+			if (member.getBeginningLine() > affectedMember.getBeginningLine()) {
+				member.setBeginningLine(member.getBeginningLine() + affectedLines);
+			} 
+		}
 	}
 }

@@ -17,6 +17,9 @@ import org.deltaj.deltaJ.RemovesMethod;
 import org.deltaj.deltaJ.RemovesSuperclass;
 import org.eclipse.emf.ecore.EObject;
 
+import preprocessing.diffpreprocessor.ModificationType;
+import preprocessing.diffs.Change;
+
 public class DeltaActionCreator {
 
 
@@ -24,13 +27,17 @@ public class DeltaActionCreator {
 	 * Adds multiple members to a delta. allChangesAsText is the String containing all changes of that shall be added to the delta.
 	 * @param allChangesAsText
 	 * @param ma
+	 * @param c
 	 * @return String of changes correctly separated and succeeding an "adds".
 	 */
-	public String createDeltaActionsForManyMembers(LinkedList<String> members, EObject ma) {
+	public String createDeltaActionsForManyMembers(LinkedList<String> members, EObject ma, 
+			Change c) {
 		StringBuilder affectedMembers = new StringBuilder();
+		int openingBrackets = 0,
+			closingBrackets = 0;
 		for (String s : members) {
 			affectedMembers.append(typeOfChange(ma));
-			if (ma instanceof RemovesMethod) {
+			if (ma instanceof RemovesMethod || ma instanceof RemovesField) {
 				// if superclass is not removed, further instructions are needed.
 				if (!affectedMembers.toString().contains("removes superclass")) {
 					String t = s.replaceAll("(public|protected|private|static|final)", "");
@@ -52,16 +59,37 @@ public class DeltaActionCreator {
 						} 
 						affectedMembers.append(methodParts[i] + " ");
 					}
-					affectedMembers.append(");\n");
+					if (!affectedMembers.toString().endsWith(";")) {
+						openingBrackets += countNumberOfOccurencesInString(affectedMembers.toString(), "(");
+						closingBrackets += countNumberOfOccurencesInString(affectedMembers.toString(), ")");
+						while (closingBrackets < openingBrackets) {
+							affectedMembers.append(")");
+							closingBrackets++;
+						}
+					}
+					if (!affectedMembers.toString().endsWith(";")) {
+						affectedMembers.append(";\n");
+					} else {
+						affectedMembers.append("\n");
+					}
 				} else {
 					affectedMembers.append(" " + s.trim() + "\n");
 				}
 			} else {
-				affectedMembers.append(" " + s.trim());
+				if (c.getTypeOfChange().equals(ModificationType.MODIFIESMETHOD)) {
+					affectedMembers.append(" " + c.getModifiedMethod() + "{\n" + 
+							(!c.getIsMethodModifiedAtStart() ? "original();\n" : ""));
+					affectedMembers.append(" adds " + s.trim() + ";\n");
+					affectedMembers.append(c.getIsMethodModifiedAtStart() ? "original();\n" : "");
+				} else {
+					affectedMembers.append(" " + s.trim() + "");
+				}
 				if (ma instanceof AddsInterfacesList || ma instanceof AddsSuperclass ||
 						ma instanceof RemovesInterfacesList || ma instanceof RemovesSuperclass ||
 						ma instanceof ModifiesSuperclass) {
-					affectedMembers.append(";");
+					if (!affectedMembers.toString().endsWith(";")) {
+						affectedMembers.append(";");
+					}
 				}
 				affectedMembers.append("\n");
 			}
@@ -92,5 +120,20 @@ public class DeltaActionCreator {
 			return "modifies";
 		}
 
+	}
+	
+	private int countNumberOfOccurencesInString(String line, String searchingFor) {
+		String tempLine = line;
+		int indexOfLastOccurence = 0,
+			occurenceCount = 0;
+		while (indexOfLastOccurence != -1) {
+			indexOfLastOccurence = tempLine.indexOf(searchingFor);
+			if (indexOfLastOccurence == -1) {
+				break;
+			}
+			tempLine = tempLine.substring(indexOfLastOccurence+searchingFor.length());
+			occurenceCount++;
+		}
+		return occurenceCount;
 	}
 }

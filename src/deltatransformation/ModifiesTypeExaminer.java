@@ -1,8 +1,5 @@
 package deltatransformation;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.deltaj.deltaJ.DeltaJFactory;
 import org.deltaj.deltaJ.Source;
 import org.deltaj.deltaJ.Sources;
@@ -51,12 +48,12 @@ public class ModifiesTypeExaminer {
 		// else is for all member declarations
 		else {
 			eom = factory.createModifiesAction();
-			if (addRem == ModificationType.ADDSMEMBER) {
+			if (addRem == ModificationType.ADDSMETHOD || addRem == ModificationType.ADDSFIELD) {
 				// for adding class members (methods, fields)
 				eom = factory.createAddsClassBodyMemberDeclaration();
-			} else if (addRem == ModificationType.MODIFIESMEMBER) {
+			} else if (addRem == ModificationType.REMOVESFIELD) {
 				eom = factory.createRemovesField();
-			} else if (addRem == ModificationType.REMOVESMEMBER) {
+			} else if (addRem == ModificationType.REMOVESMETHOD) {
 				eom = factory.createRemovesMethod();
 			}
 
@@ -87,6 +84,9 @@ public class ModifiesTypeExaminer {
 	 * @return key word for change computed from both parameters.
 	 */
 	public ModificationType examineModifiesType(byte addRem, String modifiedCodeLine) {
+//		if (addRem == -128) {
+//			return null;
+//		}
 		if (modifiedCodeLine.contains("import")) {
 			// there is no modifies import
 			if (addRem > 0) {
@@ -126,45 +126,69 @@ public class ModifiesTypeExaminer {
 		}
 		// else is for all member declarations
 		else {
-			if (addRem > 0) {
-//				return "mam"; 
-				return ModificationType.ADDSMEMBER;
-			} else {
+//			if (addRem > 0) {
+////				return "mam"; 
+//				return ModificationType.ADDSMEMBER;
+//			} else {
 				// TODO does not support arrays yet!!!
 				/*  optional modifier and mandatory (return) type, type may be everything using 
 				 *  letters, numbers and underscores, may be qualified therefore the . in the
 				 *  second group.
 				 */
-				String fieldRegex = "((public|protected|private)?\\s(\\w|\\d|_|\\.){0,50}(\\w|\\d|_)+\\s"
-						// name and either semicolon or equals with a new object/primitive type.
-						+ "(\\w|\\d|_|\\.){0,50}(\\w|\\d|_)\\s*(;|=(\\s)*(\\w|\\d|_|\\.){0,50}(\\w|\\d|_)+;))"; 
-//						 //method name with optional parameters
-//						+ "(\\w|_|.){1,50}(\\w|_)\\s*\\(((\\w|_|.){1,50}(\\w|_),)*(\\w|_|.){1,50}(\\w|_)\\)";
-				Pattern p = Pattern.compile(fieldRegex);
-				Matcher m = p.matcher(modifiedCodeLine);
+//				String fieldRegex = "((public|protected|private)?\\s(\\w|\\d|_|\\.){0,50}(\\w|\\d|_)+\\s"
+//						// name and either semicolon or equals with a new object/primitive type.
+//						+ "(\\w|\\d|_|\\.){0,50}(\\w|\\d|_)\\s*(;|=(\\s)*(\\w|\\d|_|\\.){0,50}(\\w|\\d|_)+;))"; 
+////						 //method name with optional parameters
+////						+ "(\\w|_|.){1,50}(\\w|_)\\s*\\(((\\w|_|.){1,50}(\\w|_),)*(\\w|_|.){1,50}(\\w|_)\\)";
+//				Pattern p = Pattern.compile(fieldRegex);
+//				Matcher m = p.matcher(modifiedCodeLine);
 				// if field is found, return remove or modify field.
-				if (m.find()) {
+//				if (m.find()) {
+				if (modifiedCodeLine.contains("{")) {
+					if (addRem < 0) {
+//						return "mrm";
+						return ModificationType.REMOVESMETHOD;
+					} else if (addRem > 0) {
+//						return "mam"; 
+						return ModificationType.ADDSMETHOD;
+					} else {
+//						return "mmm";
+						return ModificationType.MODIFIESMETHOD;
+					}
+				} else {
 					if (addRem < 0) {
 //						return "mrf";
-						return ModificationType.REMOVESMEMBER;
+						return ModificationType.REMOVESFIELD;
+					} else if (addRem > 0) {
+//						return "mam"; 
+						return ModificationType.ADDSFIELD;
 					} else {
 //						return "mmf";
-						return ModificationType.MODIFIESMEMBER;
+						return ModificationType.MODIFIESFIELD;
 					}
 				}
 				// otherwise return remove or modify method.
-				else {
-					if (addRem < 0) {
-//						return "mrm";
-						return ModificationType.REMOVESMEMBER;
-					} else {
-//						return "mmm";
-						return ModificationType.MODIFIESMEMBER;
-					}
-				}
+//				else {
+//					if (addRem < 0) {
+////						return "mrm";
+//						return ModificationType.REMOVESMETHOD;
+//					} else if (addRem > 0) {
+////						return "mam"; 
+//						return ModificationType.ADDSMETHOD;
+//					} else {
+////						return "mmm";
+//						return ModificationType.MODIFIESMETHOD;
+//					}
+//				}
 			}
-		}
+//		}
 //		return "a";
-		return ModificationType.CLASSADDITION;
+		if (addRem == 1) {
+			return ModificationType.CLASSADDITION;
+		} else if (addRem == -1) {
+			return ModificationType.CLASSREMOVAL;
+		} else {
+			return null;
+		}
 	}
 }

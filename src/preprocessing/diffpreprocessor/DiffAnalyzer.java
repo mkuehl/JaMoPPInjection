@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.sound.sampled.Line;
+
 import projecttree.Node;
 import projecttree.NodeType;
 import projecttree.ProjectTreeFactory;
@@ -113,10 +115,13 @@ public class DiffAnalyzer {
 		m = methodPattern.matcher(tempDiff);
 		while(m.find()) {
 			String t = m.group();
+			String tt = (tempDiff.substring(0, m.end()));
+			String[] tta = tt.split("\\n");
 			// -1 due to the linebreak of the last line.
-			int beginningLine = ((tempDiff.substring(0, m.end())).split("\\n")).length-1;
+			int beginningLine = getBeginningLineOfMember(tempDiff, t);//tta.length - 1;
 			// -1 because first line is counted.
-			int length = getLengthOfMember(tempDiff.substring(m.end()))-1;
+			String ttt = tempDiff.substring(m.end());
+			int length = getLengthOfMember(ttt)-1;
 			// methods might have two space characters. If so, extract the name from the second, if not, extract it from the first.
 			String name = t.substring(t.indexOf(" ")+1, t.indexOf("("));
 			String returnType = "";
@@ -230,25 +235,7 @@ public class DiffAnalyzer {
 				contained = false;
 			}
 		}
-		
-		System.out.println("Project: " + root.getName());
-		for (Node n : root.getAllChildren()) {
-			System.out.println("  Package: " + n.getName());
-			for (Node n2 : n.getAllChildren()) {
-				System.out.println("    Class: " + n2.getName());
-				for (Node n3 : n2.getAllChildrenOfType(NodeType.METHOD)) {
-					System.out.println("      Method: " + n3.getName());
-					System.out.println("\tReturn Type: " + n3.getJavaType());
-					for (Node n4 : n3.getAllChildrenOfType(NodeType.PARAMETER)) {
-						System.out.println("\tParameter: " + n4.getName() + " ParamType: " + n4.getJavaType());
-					}
-				}
-				for (Node n3 : n2.getAllChildrenOfType(NodeType.FIELD)) {
-					System.out.println("      Field: " + n3.getName());
-					System.out.println("\tType: " + n3.getJavaType());
-				}
-			}
-		}
+
 	}
 	
 	private int getLengthOfMember(String memberCode) {
@@ -282,6 +269,16 @@ public class DiffAnalyzer {
 			 */
 			if (openedCurlyBrackets == closedCurlyBrackets) {
 				return lineCount;
+			}
+		}
+		return -1;
+	}
+	
+	private int getBeginningLineOfMember(String diff, String memberCode) {
+		String[] lines = diff.split("\\r?\\n");
+		for (int i = 0; i < lines.length; i++) {
+			if (lines[i].contains(memberCode)) {
+				return i + (lines[0].equals("") ? 0 : 1);
 			}
 		}
 		return -1;

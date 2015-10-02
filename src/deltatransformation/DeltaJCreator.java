@@ -127,7 +127,7 @@ public class DeltaJCreator {
 	 */
 	public void addJavaUnit(Delta parent, EObject jamoppParsedClass, String packageName, String className, 
 			byte addRem, ModificationType typeOfChange) {
-		if (typeOfChange.equals("a")) {
+		if (typeOfChange == ModificationType.CLASSADDITION) {
 			// Trigger transformation of JaMoPP to DeltaJ AST
 			JavaCompilationUnit jcu = fancyJamoppToDeltaJTransformation(jamoppParsedClass);
 			addJavaAddsUnit(parent, jcu);
@@ -206,9 +206,14 @@ public class DeltaJCreator {
 		DeltaActionCreator dac = new DeltaActionCreator();
 		StringBuilder delta = new StringBuilder("");
 
+
+		if (!d.getName().contains("coredelta") && 
+				(c.getChanges() == null || c.getChanges().equals(""))) {
+			return;
+		}
 		if (deltaString == "") {
 			delta.append("delta " + d.getName() + " {\n\t");
-		}
+		} 
 		MemberSeparator ms = new MemberSeparator();
 		LinkedList<String> memberList = null;
 		if (c.getChanges() != null) {
@@ -235,19 +240,21 @@ public class DeltaJCreator {
 				delta.append("modifies " + c.getQualifiedClassName() + " {\n\t");
 				ModifiesUnit mu = (ModifiesUnit) da;
 				for (ModifiesImport mi : mu.getModifiesImports()) {
-					delta.append(dac.createDeltaActionsForManyMembers(memberList, mi));
+					delta.append(dac.createDeltaActionsForManyMembers(memberList, mi, c));
 				}
 				for (ModifiesInterface min : mu.getModifiesInterfaces()) {
-					delta.append(dac.createDeltaActionsForManyMembers(memberList, min));
+					delta.append(dac.createDeltaActionsForManyMembers(memberList, min, c));
 				}
 				if (mu.getModifiesSuperclass() != null) {
-					delta.append(dac.createDeltaActionsForManyMembers(memberList, mu.getModifiesSuperclass()));
+					delta.append(dac.createDeltaActionsForManyMembers(memberList, 
+							mu.getModifiesSuperclass(), c));
 				}
 				for (ModifiesAction ma : mu.getModifiesClassMembers()) {
 					// List of separated members is given to the delta action creator method
 
-					delta.append(dac.createDeltaActionsForManyMembers(memberList, ma));
+					delta.append(dac.createDeltaActionsForManyMembers(memberList, ma, c));
 				}
+				delta.append("}\n");
 			} else {
 				//					RemovesUnit ru = (RemovesUnit) da;
 				//					for (RemovesAction ra : ru.)
@@ -261,6 +268,10 @@ public class DeltaJCreator {
 		if (deltaString.length() > 0) {
 			deltaString += "}\n";
 		}
+	}
+	
+	public String getDeltaString() {
+		return deltaString;
 	}
 	
 	/**

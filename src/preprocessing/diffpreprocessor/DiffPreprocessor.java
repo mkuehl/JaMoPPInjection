@@ -404,9 +404,6 @@ public class DiffPreprocessor {
 										if (!interfaces.equals("")) {
 
 											beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("interfaces ", "implements "));
-//											beginningLine = commitPart.substring(0, commitPart.indexOf(
-//													interfaces.replace("interfaces ", "implements ")))
-//													.split("\\n").length-1;
 											changes.add(createChange((byte) -1, beginningLine, qualifiedClassName, 
 														false, interfaces));
 											alreadyProcessed = true;
@@ -439,18 +436,7 @@ public class DiffPreprocessor {
 						lineBeforeWasAdded = 'a';
 						if (addRem < 1) {
 							// imports just can be added or removed, thus 0 is not allowed.
-//							if (line.contains("import")) {
-//								addRem = 1;
-//							} else if (line.substring(1).matches("([\\s]*(public|protected|private)?\\s(\\w|\\d|_|\\.){0,50}(\\w|\\d|_)+\\s"
-//											// name and either semicolon or equals with a new object/primitive type.
-//											+ "(\\w|\\d|_|\\.){0,50}(\\w|\\d|_)\\s*(;|=(\\s)*(\\w|\\d|_|\\.){0,50}(\\w|\\d|_)+;))")) {
-//							// if no import, the class is modified.
-//								addRem = 1;
-//							} else {
-//								addRem = 1;
-//							}
 							addRem = 1;
-//							beginningLine = actualLine;
 						}
 						// if changes have been already added (for interfaces and superclasses) don't add them again
 						if (!alreadyProcessed) {

@@ -4,8 +4,6 @@ import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.sound.sampled.Line;
-
 import projecttree.Node;
 import projecttree.NodeType;
 import projecttree.ProjectTreeFactory;
@@ -26,7 +24,7 @@ public class DiffAnalyzer {
 		String importRegex = "import\\s[a-zA-Z0-9_]+(\\.([a-zA-Z0-9_]+|\\*))+;";
 		String methodRegex = "(public|protected|private)?\\s[a-zA-Z0-9_]+\\s[a-zA-Z0-9_]+\\s?\\(";
 		String parameterRegex = "(\\s)*[a-zA-Z0-9_]+(\\s)*[a-zA-Z0-9_]+(\\s)*(,)?";
-		String fieldRegex = "(public|protected|private)?\\s[a-zA-Z0-9_]+\\s[a-zA-Z0-9_]+\\s?(;|=)";
+		String fieldRegex = "(?!\\breturn\\b)(public|protected|private)?\\s(?!\\bnull;\\b)([a-zA-Z0-9_]+)\\s[a-zA-Z0-9_]+\\s?(;|=)";
 		
 		Pattern packagePattern = Pattern.compile(packageRegex);
 		Pattern classPattern = Pattern.compile(classRegex);
@@ -115,8 +113,8 @@ public class DiffAnalyzer {
 		m = methodPattern.matcher(tempDiff);
 		while(m.find()) {
 			String t = m.group();
-			String tt = (tempDiff.substring(0, m.end()));
-			String[] tta = tt.split("\\n");
+//			String tt = (tempDiff.substring(0, m.end()));
+//			String[] tta = tt.split("\\n");
 			// -1 due to the linebreak of the last line.
 			int beginningLine = getBeginningLineOfMember(tempDiff, t);//tta.length - 1;
 			// -1 because first line is counted.
@@ -189,6 +187,10 @@ public class DiffAnalyzer {
 		m = fieldPattern.matcher(tempDiff);
 		while (m.find()) {
 			String t = m.group();
+			// no return statements.
+			if (t.contains("return")) {
+				continue;
+			}
 			// -1 due to the linebreak of the last line.
 			int beginningLine = tempDiff.substring(0, m.end()).split("\\n").length-1;
 			// -1 because first line is counted.
@@ -212,11 +214,14 @@ public class DiffAnalyzer {
 			}
 			String[] ta = modifiers.split("\\s");
 			HashSet<Node> hsn = classNode.getAllChildrenOfType(NodeType.FIELD);
+			hsn.addAll(classNode.getAllChildrenOfType(NodeType.METHOD));
 			Node field = null;
+			Node containingMethod = null;
 			boolean contained = false;
+			boolean containedByMethod = false;
 			
 			field = ptf.createField(name, null);
-			field.setBeginningLine(beginningLine);
+			field.setBeginningLine(beginningLine+1);
 			field.setLength(1);
 			field.setJavaType(returnType);
 			
@@ -224,16 +229,30 @@ public class DiffAnalyzer {
 				field.addModifier(modifier);
 			}
 			for (Node nth : hsn) {
-				if (nth.getName().equals(field.getName())) {
+				if (nth.getType().equals(NodeType.METHOD) && (nth.getBeginningLine() < field.getBeginningLine() && 
+						(nth.getBeginningLine()+nth.getLength()) > (field.getBeginningLine()+field.getLength()))) {
+					// if field lies between method borders
+					contained = false;
+					containedByMethod = true;
+					containingMethod = nth;
+					break;
+				} else if (nth.getName().equals(field.getName()) && nth.getType().equals(NodeType.FIELD)) {
 					contained = true;
 					break;
-				}
+				} 
 			}
 			if (!contained) {
-				classNode.addChild(field);
-				field.setParent(classNode);
-				contained = false;
-			}
+
+				if (containedByMethod) {
+					containingMethod.addChild(field);
+					field.setParent(containingMethod);
+					containedByMethod = false;
+				} else {
+					classNode.addChild(field);
+					field.setParent(classNode);
+					contained = false;
+				}
+			} 
 		}
 
 	}

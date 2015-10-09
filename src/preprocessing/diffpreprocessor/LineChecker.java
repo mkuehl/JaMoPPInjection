@@ -21,9 +21,46 @@ public class LineChecker {
 		String newParts = actualLine;
 		String[] partsLineBefore = lineBefore.split("\\s");
 		for (String p : partsLineBefore) {
+			if (p.equals("extends") || p.equals("implements")) {
+				continue;
+			}
 			newParts = newParts.replace(p, "");
 		}
+		newParts = newParts.trim();
+		if (newParts.contains("extends implements")) {
+			newParts = newParts.replace("extends", "");
+		}
+		if (newParts.endsWith("implements")) {
+			newParts = newParts.replace("implements", "");
+		}
 		return newParts;
+	}
+	
+	/**
+	 * 	/**
+	 * Removes all substrings contained in the shorter line and separated by the space character from the longer line.
+	 * Returns just the parts that are not found in actualLine.
+	 * Supposed to be used within DiffPreprocessor.separateChanges()
+	 * @param actualLine - line to check/remove parts from.
+	 * @param lineBefore - old parts of actual line.
+	 * @return
+	 */
+	public String getChangedPartsOfLine(String actualLine, String lineBefore) {
+		
+		String changedParts,
+			   shorterLine;
+		if (actualLine.length()>lineBefore.length()) {
+			changedParts = actualLine;
+			shorterLine = lineBefore;
+		} else {
+			changedParts = lineBefore;
+			shorterLine = actualLine;
+		}
+		String[] partsLineBefore = shorterLine.split("\\s");
+		for (String p : partsLineBefore) {
+			changedParts = changedParts.replace(p, "");
+		}
+		return changedParts;
 	}
 	
 	public String getSuperclassFromLineArray(String[] addedParts) {

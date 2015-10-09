@@ -52,11 +52,11 @@ public class Node {
 		// if length not set and changed, update subsequent members.
 		if (length > -1 && p_length != length) {
 			boolean linesRemoved = p_length < length;
-			for (Node child : parent.getAllChildren()) {
-				if (child.getType().equals(NodeType.METHOD) || child.getType().equals(NodeType.FIELD)) {
-					updateLinesOfSubsequentMembers(parent, child, linesRemoved);
-				}
-			}
+//			for (Node child : parent.getAllChildren()) {
+//				if (child.getType().equals(NodeType.METHOD) || child.getType().equals(NodeType.FIELD)) {
+					updateLinesOfSubsequentMembers(parent, this, linesRemoved);
+//				}
+//			}
 		} 
 		length = p_length;
 	}

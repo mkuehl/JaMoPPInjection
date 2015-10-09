@@ -251,9 +251,10 @@ public class DiffPreprocessor {
 			// if no line info found, check if commitPart starts with "[PATCH]", if not, iterate over lines.
 			else if (!commitPart.startsWith("[PATCH]")) {
 				Change change = new Change();
+				root = null;
 				root = new Node("ProjectRoot", NodeType.PROJECT);
 				da.analyzeDiff(commitPart, root);
-				showTree(root);
+//				showTree(root);
 				
 				// TODO Classes are not added correctly if not in the coredelta!
 //				if (ClassAdditionExaminer.isWholeClassAdded(commitPart)) {
@@ -344,25 +345,28 @@ public class DiffPreprocessor {
 							String temp = lc.getNewPartsOfLine(line.substring(1), lineBefore.substring(1)).trim(),
 								   superclass = "",
 								   interfaces = "";
+							String[] tempArray;
+							
 //							if (line.substring(1).contains(lineBefore.substring(1).replace("{", ""))) {
-							if (!temp.equals("")) {
+
 								// additions
+
+							if (line.length() > lineBefore.length()) {
 								// as parameters cut the first character, because it is always a - or +.
-//								String temp = lc.getNewPartsOfLine(line.substring(1), lineBefore.substring(1)).trim(),
-//									   superclass = "",
-//									   interfaces = "";
-								String[] tempArray;
+								//								String temp = lc.getNewPartsOfLine(line.substring(1), lineBefore.substring(1)).trim(),
+								//									   superclass = "",
+								//									   interfaces = "";
 								if (temp != "") {
 									tempArray = temp.trim().split("(\\s|,)");
-									
+
 									if (temp.contains("extends")) {
 										superclass = lc.getSuperclassFromLineArray(tempArray);
 										if (superclass != "") {
 
 											beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("superclass ", "extends "));
-//											beginningLine = commitPart.substring(0, commitPart.indexOf(
-//												superclass.replace("superclass ", "extends ")))
-//												.split("\\n").length-1;
+											//											beginningLine = commitPart.substring(0, commitPart.indexOf(
+											//												superclass.replace("superclass ", "extends ")))
+											//												.split("\\n").length-1;
 											changes.add(createChange((byte) 1, beginningLine, qualifiedClassName, 
 													false, superclass));
 											alreadyProcessed = true;
@@ -372,32 +376,35 @@ public class DiffPreprocessor {
 										interfaces = lc.getInterfacesFromLineArray(tempArray);
 										if (interfaces != "") {
 											beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("interfaces ", "implements "));
-//											beginningLine = commitPart.substring(0, commitPart.indexOf(
-//													interfaces.replace("interfaces ", "implements ")))
-//													.split("\\n").length-1;
+											//											beginningLine = commitPart.substring(0, commitPart.indexOf(
+											//													interfaces.replace("interfaces ", "implements ")))
+											//													.split("\\n").length-1;
 											changes.add(createChange((byte) 1, beginningLine, qualifiedClassName, 
-														false, interfaces));
+													false, interfaces));
 											alreadyProcessed = true;
 										}
 									}
 								}
+							} else {
 								// removals
 								superclass = "";
 								interfaces = "";
 								temp = lc.getNewPartsOfLine(lineBefore.substring(1), line.substring(1)).trim();
 								if (!temp.equals("")) {
 									tempArray = temp.split("\\s");
-									if (line.contains("extends")) {
+									String[] tempArray2 = new String[tempArray.length-2];
+									if (lineBefore.contains("extends") && !line.contains("extends")) {
 										superclass = lc.getSuperclassFromLineArray(tempArray);
 										if (superclass != "") {
 											beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("superclass ", "extends "));
-//											beginningLine = commitPart.substring(0, commitPart.indexOf(
-//													superclass.replace("superclass ", "extends ")))
-//													.split("\\n").length-1;
+											//											beginningLine = commitPart.substring(0, commitPart.indexOf(
+											//													superclass.replace("superclass ", "extends ")))
+											//													.split("\\n").length-1;
 											changes.add(createChange((byte) -1, beginningLine, qualifiedClassName, 
 													false, superclass));
 											alreadyProcessed = true;
 										}
+										System.arraycopy(tempArray, 2, tempArray2, 0, tempArray.length-2);
 									}
 									if (temp.contains("implements")) {
 										interfaces = lc.getInterfacesFromLineArray(tempArray);
@@ -405,7 +412,7 @@ public class DiffPreprocessor {
 
 											beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("interfaces ", "implements "));
 											changes.add(createChange((byte) -1, beginningLine, qualifiedClassName, 
-														false, interfaces));
+													false, interfaces));
 											alreadyProcessed = true;
 										}
 									}
@@ -415,6 +422,7 @@ public class DiffPreprocessor {
 								}
 								addRem = -128;
 							}
+
 							
 							if (changes == null) {
 								changes = new Changes();
@@ -697,11 +705,15 @@ public class DiffPreprocessor {
 					for (Node n4 : n3.getAllChildrenOfType(NodeType.PARAMETER)) {
 						System.out.println("\tParameter: " + n4.getName() + " ParamType: " + n4.getJavaType());
 					}
+					for (Node n4 : n3.getAllChildrenOfType(NodeType.FIELD)) {
+						System.out.println("\tLocal Field: " + n4.getName() + " Type: " + n4.getJavaType());
+					}
 				}
 				for (Node n3 : n2.getAllChildrenOfType(NodeType.FIELD)) {
 					System.out.println("      Field: " + n3.getName());
 					System.out.println("\tType: " + n3.getJavaType());
 					System.out.println("\tBeginningLine: " + n3.getBeginningLine());
+					System.out.println("\tPARENT: " + n3.getParent().getType().toString() + " " + n3.getParent().getName());
 				}
 			}
 		}

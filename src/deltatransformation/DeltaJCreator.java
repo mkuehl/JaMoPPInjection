@@ -206,7 +206,6 @@ public class DeltaJCreator {
 		DeltaActionCreator dac = new DeltaActionCreator();
 		StringBuilder delta = new StringBuilder("");
 
-
 		if (!d.getName().contains("coredelta") && 
 				(c.getChanges() == null || c.getChanges().equals(""))) {
 			return;

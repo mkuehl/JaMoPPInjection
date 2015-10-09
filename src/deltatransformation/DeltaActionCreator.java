@@ -35,6 +35,7 @@ public class DeltaActionCreator {
 		StringBuilder affectedMembers = new StringBuilder();
 		int openingBrackets = 0,
 			closingBrackets = 0;
+
 		for (String s : members) {
 			affectedMembers.append(typeOfChange(ma));
 			if (ma instanceof RemovesMethod || ma instanceof RemovesField) {
@@ -84,12 +85,19 @@ public class DeltaActionCreator {
 				} else {
 					affectedMembers.append(" " + s.trim() + "");
 				}
+				// TODO better with ModificationType enum !!!!!!!!!!!!!!!!!!!!!
 				if (ma instanceof AddsInterfacesList || ma instanceof AddsSuperclass ||
 						ma instanceof RemovesInterfacesList || ma instanceof RemovesSuperclass ||
 						ma instanceof ModifiesSuperclass) {
 					if (!affectedMembers.toString().endsWith(";")) {
 						affectedMembers.append(";");
 					}
+				}
+				openingBrackets += countNumberOfOccurencesInString(affectedMembers.toString(), "{");
+				closingBrackets += countNumberOfOccurencesInString(affectedMembers.toString(), "}");
+				while (closingBrackets < openingBrackets) {
+					affectedMembers.append("}");
+					closingBrackets++;
 				}
 				affectedMembers.append("\n");
 			}

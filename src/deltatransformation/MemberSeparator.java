@@ -40,7 +40,13 @@ public class MemberSeparator {
 		int openedCurlyBrackets = 0,
 			closedCurlyBrackets = 0;
 		
-		if (typeOfChange == ModificationType.ADDSINTERFACE || typeOfChange == ModificationType.ADDSSUPERCLASS) {
+		if (typeOfChange.equals(ModificationType.ADDSINTERFACE) || 
+				typeOfChange.equals(ModificationType.ADDSSUPERCLASS)) {
+			separatedMembers.add(allMembers);
+			return separatedMembers;
+		}
+		if (typeOfChange.equals(ModificationType.REMOVESINTERFACE) || 
+				typeOfChange.equals(ModificationType.REMOVESSUPERCLASS)) {
 			separatedMembers.add(allMembers);
 			return separatedMembers;
 		}

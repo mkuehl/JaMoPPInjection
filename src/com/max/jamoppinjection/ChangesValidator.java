@@ -78,7 +78,12 @@ public class ChangesValidator {
 			
 	private String wrapCodeWithClass(String code, String className ) {
 		String firstPart = "";
+		boolean addClassWord = true;
 		try {
+			if (code.contains("package") && code.contains("class")) {
+				// if it is a later class addition, the code itself is suffiecient.
+				addClassWord = false;
+			}
 			if (code.contains("import")) {
 				/*
 				 *  firstPart is from the beginning (because the package may not be added) to the 
@@ -104,7 +109,8 @@ public class ChangesValidator {
 			}
 		} catch (java.lang.StringIndexOutOfBoundsException sioobe) {
 		}
-		code = firstPart + "class " + className + " {\n\n" + code + "\n}";
+		// if addClassWord is true, normal subclass changes, otherwise the code is already a complete class.
+		code = addClassWord ? firstPart + "class " + className + " {\n\n" + code + "\n}" : code;
 		return code;
 	}
 	

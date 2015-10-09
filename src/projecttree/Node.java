@@ -12,7 +12,6 @@ public class Node {
 	private HashSet<String> modifiers;
 	private Node parent;
 	private HashSet<Node> children;
-	private HashSet<Node> parameters;
 	
 	public Node(String p_name, NodeType p_type) {
 		name = p_name;
@@ -21,7 +20,6 @@ public class Node {
 		length = -1;
 		modifiers = new HashSet<String>();
 		children = new HashSet<Node>();
-		parameters = new HashSet<Node>();
 	}
 	
 	public void setName(String p_name) {
@@ -144,26 +142,6 @@ public class Node {
 	
 	public HashSet<Node> getAllChildren() {
 		return children;
-	}
-	
-	/**
-	 * If Node represents a Method, parameters can be added.
-	 * @param parameter
-	 */
-	public void addParameter(Node parameter) {
-		if (type.equals(NodeType.METHOD) && parameter.getType().equals(NodeType.PARAMETER)) {
-			parameters.add(parameter);
-		}
-	}
-	
-	public void removeParameter(Node parameter) {
-		if (parameters.contains(parameter)) {
-			parameters.remove(parameter);
-		}
-	}
-	
-	public HashSet<Node> getAllParameters() {
-		return parameters;
 	}
 	
 	public HashSet<Node> getAllChildrenOfType(NodeType p_type) {

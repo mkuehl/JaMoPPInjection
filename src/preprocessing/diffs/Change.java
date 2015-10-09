@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import preprocessing.diffpreprocessor.ModificationType;
+import projecttree.Node;
 
 /**
  * This class is designed for represent all changes affecting the specified class.
@@ -22,7 +23,7 @@ public class Change {
 	private ModificationType typeOfChange;
 	private boolean isWholeClass;
 	private boolean isMethodModifiedAtStart;
-	private String modifiedMethod;
+	private Node modifiedMethod;
 	// Contains the changes
 	private String changes;
 	
@@ -33,7 +34,7 @@ public class Change {
 		typeOfChange = null;
 		isWholeClass = false;
 		setIsMethodModifiedAtStart(false);
-		setModifiedMethod("#none");
+		setModifiedMethod(null);
 		changes = null;
 	}
 	
@@ -179,11 +180,11 @@ public class Change {
 		this.isMethodModifiedAtStart = isMethodModifiedAtStart;
 	}
 
-	public String getModifiedMethod() {
+	public Node getModifiedMethod() {
 		return modifiedMethod;
 	}
 
-	public void setModifiedMethod(String modifiedMethod) {
+	public void setModifiedMethod(Node modifiedMethod) {
 		this.modifiedMethod = modifiedMethod;
 	}
 

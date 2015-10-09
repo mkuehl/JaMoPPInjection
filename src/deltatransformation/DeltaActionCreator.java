@@ -19,6 +19,8 @@ import org.eclipse.emf.ecore.EObject;
 
 import preprocessing.diffpreprocessor.ModificationType;
 import preprocessing.diffs.Change;
+import projecttree.Node;
+import projecttree.NodeType;
 
 public class DeltaActionCreator {
 
@@ -38,7 +40,8 @@ public class DeltaActionCreator {
 
 		for (String s : members) {
 			affectedMembers.append(typeOfChange(ma));
-			if (ma instanceof RemovesMethod || ma instanceof RemovesField) {
+			if (ma instanceof RemovesMethod || ma instanceof RemovesField || 
+					ma instanceof RemovesSuperclass) {
 				// if superclass is not removed, further instructions are needed.
 				if (!affectedMembers.toString().contains("removes superclass")) {
 					String t = s.replaceAll("(public|protected|private|static|final)", "");
@@ -74,14 +77,30 @@ public class DeltaActionCreator {
 						affectedMembers.append("\n");
 					}
 				} else {
-					affectedMembers.append(" " + s.trim() + "\n");
+//					affectedMembers.append(" removes superclass;\n");
 				}
 			} else {
 				if (c.getTypeOfChange().equals(ModificationType.MODIFIESMETHOD)) {
-					affectedMembers.append(" " + c.getModifiedMethod() + "{\n" + 
-							(!c.getIsMethodModifiedAtStart() ? "original();\n" : ""));
-					affectedMembers.append(" adds " + s.trim() + ";\n");
-					affectedMembers.append(c.getIsMethodModifiedAtStart() ? "original();\n" : "");
+					affectedMembers.append(" " + c.getModifiedMethod().getName() + "(");
+					String params = "",
+						   paramsWithType = "";
+					// params have to be named, with type for declaration, only name for calls.
+					for (Node p : c.getModifiedMethod().getAllChildrenOfType(NodeType.PARAMETER)) {
+						params += p.getName() + ",";
+						paramsWithType += p.getJavaType() + " " + p.getName() + ",";
+					}
+					if (params.endsWith(",")) {
+						params = params.substring(0, params.length()-1);
+					}
+					if (paramsWithType.endsWith(",")) {
+						paramsWithType = paramsWithType.substring(0, paramsWithType.length()-1);
+					}
+					affectedMembers.append(paramsWithType + ") {\n" + 
+							(!c.getIsMethodModifiedAtStart() ? ("original(" + params +
+									");\n") : ""));
+					affectedMembers.append(s.trim() + (s.trim().endsWith(";") ? "" : ";") + "\n");
+					affectedMembers.append(c.getIsMethodModifiedAtStart() ? "original(" + 
+							params + ");\n" : "");
 				} else {
 					affectedMembers.append(" " + s.trim() + "");
 				}
@@ -117,10 +136,12 @@ public class DeltaActionCreator {
 	 */
 	private String typeOfChange(EObject ma) {
 		if (ma instanceof RemovesField || ma instanceof RemovesImport ||
-				ma instanceof RemovesInterfacesList || ma instanceof RemovesMethod ||
-				ma instanceof RemovesSuperclass) {
+				ma instanceof RemovesInterfacesList || ma instanceof RemovesMethod) {
 			return "removes";
+		} else if (ma instanceof RemovesSuperclass) {
+			return "removes superclass;";
 		} else if (ma instanceof AddsClassBodyMemberDeclaration || ma instanceof AddsImport ||
+		
 				ma instanceof AddsInterfacesList || ma instanceof AddsMember ||
 				ma instanceof AddsMemberDeclaration || ma instanceof AddsEnumConstant ||
 				ma instanceof AddsSuperclass) {

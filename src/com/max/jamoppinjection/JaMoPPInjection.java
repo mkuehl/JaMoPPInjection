@@ -31,7 +31,7 @@ public class JaMoPPInjection {
 		//Get (valid) Java source code from somewhere.
 		String code = "";	
 		int i = 0;
-		int headRevision = 17;
+		int headRevision = 18;
 
 		// Connector to git to clone, extract code base and diffs.
 		GitConnectorCmdL gcl = new GitConnectorCmdL("", "");
@@ -125,6 +125,9 @@ public class JaMoPPInjection {
 								packageName = c.getPackageName();
 								className = c.getClassName();
 							}
+							if (c.getTypeOfChange() != null && c.getTypeOfChange().equals(ModificationType.CLASSADDITION)) {
+								System.out.println();
+							}
 							djc.addJavaUnit(tempDelta, cVal.validateChange(c), packageName, className, 
 									c.getAddRem(), c.getTypeOfChange());
 							if (k == changes.size()-2) {
@@ -133,9 +136,9 @@ public class JaMoPPInjection {
 							djc.addToDeltaString(tempDelta, c);
 
 							// interfaces and superclasses have already a semicolon, if the deltastring has one as well, don't close it!
-							if (!(c.getChanges().contains("interfaces") || c.getChanges().contains("superclass")) && 
-									!djc.getDeltaString().endsWith(";")) {
-//								djc.closeDeltaString();
+							if (c.getTypeOfChange().equals(ModificationType.CLASSADDITION) || 
+									c.getTypeOfChange().equals(ModificationType.CLASSREMOVAL)) {
+								djc.closeDeltaString();
 							}
 						}
 

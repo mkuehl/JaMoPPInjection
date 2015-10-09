@@ -176,9 +176,11 @@ public class DiffAnalyzer {
 						}
 					}
 					if (!contained) {
-						method.addChild(paramNode);
-						paramNode.setParent(method);
-						contained = false;
+						if (paramNode != null && !paramNode.getName().equals("") && !paramNode.getJavaType().equals("")) {
+							method.addChild(paramNode);
+							paramNode.setParent(method);
+							contained = false;
+						}
 					}
 				}
 			}

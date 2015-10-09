@@ -213,6 +213,7 @@ public class DeltaJCreator {
 		if (deltaString == "") {
 			delta.append("delta " + d.getName() + " {\n\t");
 		} 
+		
 		MemberSeparator ms = new MemberSeparator();
 		LinkedList<String> memberList = null;
 		if (c.getChanges() != null) {
@@ -233,7 +234,18 @@ public class DeltaJCreator {
 			if (da instanceof AddsUnit) {
 				AddsUnit au = (AddsUnit) da;
 				for (Source s : au.getUnit().getSource().getSources()) {
+					// if more than one " class " is contained, the array will get bigger than 2. Then take the changes instead.
+//					int numberOfClassesPlusOne = s.getDelta().split(" class ").length;
+//					if (numberOfClassesPlusOne == 2) {
 					delta.append("adds { " + s.getDelta() + "\n");
+//					} else if (numberOfClassesPlusOne > 2) {
+//					// else if case applies normally only to non-coredelta class additions.
+//						// better check the changes as well
+//						numberOfClassesPlusOne = c.getChanges().split("class").length;
+//						if (numberOfClassesPlusOne == 2) {
+//							delta.append("adds { " + c.getChanges() + "\n");
+//						}
+//					}
 				}
 			} else if (da instanceof ModifiesUnit) {
 				delta.append("modifies " + c.getQualifiedClassName() + " {\n\t");
@@ -246,7 +258,7 @@ public class DeltaJCreator {
 				}
 				if (mu.getModifiesSuperclass() != null) {
 					delta.append(dac.createDeltaActionsForManyMembers(memberList, 
-							mu.getModifiesSuperclass(), c));
+							mu.getModifiesSuperclass(), c) + "\n");
 				}
 				for (ModifiesAction ma : mu.getModifiesClassMembers()) {
 					// List of separated members is given to the delta action creator method

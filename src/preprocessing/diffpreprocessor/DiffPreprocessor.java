@@ -654,8 +654,8 @@ public class DiffPreprocessor {
 			containingClass = containingPackage.getChild(change.getClassName());
 			containingClass.removeChild(modifiedMethod);
 		}
-		if (modifiedMethod != null && !modifiedMethod.getName().equals("#none")) {
-			change.setModifiedMethod(modifiedMethod.getName());
+		if (modifiedMethod != null /*&& !modifiedMethod.getName().equals("#none")*/) {
+			change.setModifiedMethod(modifiedMethod);
 		}
 		if (change.getTypeOfChange() == null) {
 			

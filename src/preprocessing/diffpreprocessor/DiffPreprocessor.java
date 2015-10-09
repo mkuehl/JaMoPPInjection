@@ -562,6 +562,13 @@ public class DiffPreprocessor {
 		int indexddd = tempCommitPart.indexOf(innersubstring);
 		// if not contained, look, if it is a removal, that previously would have been removed.
 		if (indexddd < 0) {
+			/*
+			 * with adding or removing interfaces the problem may occur, that "implements" and the respective interface/s
+			 * are separated. Thus, substring or contains will not fit in this case and "implements" is used instead.
+			 */
+			if (innersubstring.contains("implements")) {
+				innersubstring = "implements";
+			}
 			// get everything from the beginning of the original commitPart up to the begin of the modifications.
 			String t = commitPart.substring(0, commitPart.indexOf(innersubstring));
 			String[] ta = t.split("\\n");

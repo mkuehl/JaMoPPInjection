@@ -27,7 +27,8 @@ public class LineChecker {
 			newParts = newParts.replace(p, "");
 		}
 		newParts = newParts.trim();
-		if (newParts.contains("extends implements")) {
+		if (newParts.contains("extends implements") || 
+				newParts.contains("extends  implements")) {
 			newParts = newParts.replace("extends", "");
 		}
 		if (newParts.endsWith("implements")) {

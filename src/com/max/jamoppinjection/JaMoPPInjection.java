@@ -31,7 +31,7 @@ public class JaMoPPInjection {
 		//Get (valid) Java source code from somewhere.
 		String code = "";	
 		int i = 0;
-		int headRevision = 14;
+		int headRevision = 17;
 
 		// Connector to git to clone, extract code base and diffs.
 		GitConnectorCmdL gcl = new GitConnectorCmdL("", "");

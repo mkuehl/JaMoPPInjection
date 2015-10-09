@@ -89,6 +89,9 @@ public class DeltaActionCreator {
 				if (ma instanceof AddsInterfacesList || ma instanceof AddsSuperclass ||
 						ma instanceof RemovesInterfacesList || ma instanceof RemovesSuperclass ||
 						ma instanceof ModifiesSuperclass) {
+					if (affectedMembers.toString().endsWith(",")) {
+						affectedMembers.deleteCharAt(affectedMembers.length()-1);
+					}
 					if (!affectedMembers.toString().endsWith(";")) {
 						affectedMembers.append(";");
 					}

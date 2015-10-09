@@ -24,6 +24,9 @@ public class LineChecker {
 			if (p.equals("extends") || p.equals("implements")) {
 				continue;
 			}
+			if (p.endsWith(",")) {
+				p = p.substring(0, p.length()-1);
+			}
 			newParts = newParts.replace(p, "");
 		}
 		newParts = newParts.trim();
@@ -98,8 +101,11 @@ public class LineChecker {
 
 			interfaces += ", " + addedParts[i];
 		}
-		// codewords are removed when creating Change object
-		interfaces = "interfaces " + interfaces.substring(1).trim();
+		// if empty, just return empty string.
+		if (!interfaces.equals("")) {
+			// codewords are removed when creating Change object
+			interfaces = "interfaces " + interfaces.substring(1).trim();
+		}
 		return interfaces;
 	}
 	

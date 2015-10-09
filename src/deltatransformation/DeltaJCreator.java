@@ -20,6 +20,7 @@ import org.deltaj.deltaJ.ModifiesInheritance;
 import org.deltaj.deltaJ.ModifiesInterface;
 import org.deltaj.deltaJ.ModifiesPackage;
 import org.deltaj.deltaJ.ModifiesUnit;
+import org.deltaj.deltaJ.RemovesUnit;
 import org.deltaj.deltaJ.Source;
 import org.deltaj.deltaJ.Sources;
 import org.eclipse.emf.common.util.EList;
@@ -127,11 +128,15 @@ public class DeltaJCreator {
 	 */
 	public void addJavaUnit(Delta parent, EObject jamoppParsedClass, String packageName, String className, 
 			byte addRem, ModificationType typeOfChange) {
-		if (typeOfChange == ModificationType.CLASSADDITION) {
+		if (typeOfChange.equals(ModificationType.CLASSADDITION)) {
 			// Trigger transformation of JaMoPP to DeltaJ AST
 			JavaCompilationUnit jcu = fancyJamoppToDeltaJTransformation(jamoppParsedClass);
 			addJavaAddsUnit(parent, jcu);
-		} else if (typeOfChange != ModificationType.CLASSADDITION && typeOfChange != ModificationType.CLASSREMOVAL) {
+		} else if (typeOfChange.equals(ModificationType.CLASSREMOVAL)) {
+			addJavaRemovesUnit(parent, packageName + "." + className);
+		} else if (!typeOfChange.equals(ModificationType.CLASSADDITION) && 
+				!typeOfChange.equals(ModificationType.CLASSREMOVAL)) {
+		
 			addJavaModifiesUnit(parent, typeOfChange, jamoppParsedClass);
 		}
 	}
@@ -146,6 +151,14 @@ public class DeltaJCreator {
 		parent.getDeltaActions().add(au);
 
 		// Nothing will be returned because we don't need to add anything here.
+	}
+	
+	private void addJavaRemovesUnit(Delta parent, String qualifiedClassName) {
+		RemovesUnit ru = factory.createRemovesUnit();
+		
+		ru.setQName(qualifiedClassName);
+		
+		parent.getDeltaActions().add(ru);
 	}
 	
 	private void addJavaModifiesUnit(Delta parent, ModificationType typeOfChange, EObject ast) {
@@ -213,7 +226,7 @@ public class DeltaJCreator {
 		if (deltaString == "") {
 			delta.append("delta " + d.getName() + " {\n\t");
 		} 
-		
+
 		MemberSeparator ms = new MemberSeparator();
 		LinkedList<String> memberList = null;
 		if (c.getChanges() != null) {
@@ -247,6 +260,9 @@ public class DeltaJCreator {
 //						}
 //					}
 				}
+			} else if (da instanceof RemovesUnit) {
+				RemovesUnit ru = (RemovesUnit) da;
+				delta.append("removes " + ru.getQName() + ";\n");
 			} else if (da instanceof ModifiesUnit) {
 				delta.append("modifies " + c.getQualifiedClassName() + " {\n\t");
 				ModifiesUnit mu = (ModifiesUnit) da;

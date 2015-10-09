@@ -346,82 +346,82 @@ public class DiffPreprocessor {
 								   superclass = "",
 								   interfaces = "";
 							String[] tempArray;
-							
-//							if (line.substring(1).contains(lineBefore.substring(1).replace("{", ""))) {
 
-								// additions
+							//							if (line.substring(1).contains(lineBefore.substring(1).replace("{", ""))) {
 
-							if (line.length() > lineBefore.length()) {
-								// as parameters cut the first character, because it is always a - or +.
-								//								String temp = lc.getNewPartsOfLine(line.substring(1), lineBefore.substring(1)).trim(),
-								//									   superclass = "",
-								//									   interfaces = "";
-								if (temp != "") {
-									tempArray = temp.trim().split("(\\s|,)");
+							// additions
 
-									if (temp.contains("extends")) {
-										superclass = lc.getSuperclassFromLineArray(tempArray);
-										if (superclass != "") {
+							// as parameters cut the first character, because it is always a - or +.
+							//								String temp = lc.getNewPartsOfLine(line.substring(1), lineBefore.substring(1)).trim(),
+							//									   superclass = "",
+							//									   interfaces = "";
+							if (temp != "") {
+								tempArray = temp.trim().split("(\\s|,)");
 
-											beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("superclass ", "extends "));
-											//											beginningLine = commitPart.substring(0, commitPart.indexOf(
-											//												superclass.replace("superclass ", "extends ")))
-											//												.split("\\n").length-1;
-											changes.add(createChange((byte) 1, beginningLine, qualifiedClassName, 
-													false, superclass));
-											alreadyProcessed = true;
-										}
-									}
-									if (temp.contains("implements")) {
-										interfaces = lc.getInterfacesFromLineArray(tempArray);
-										if (interfaces != "") {
-											beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("interfaces ", "implements "));
-											//											beginningLine = commitPart.substring(0, commitPart.indexOf(
-											//													interfaces.replace("interfaces ", "implements ")))
-											//													.split("\\n").length-1;
-											changes.add(createChange((byte) 1, beginningLine, qualifiedClassName, 
-													false, interfaces));
-											alreadyProcessed = true;
-										}
+								if (temp.contains("extends")) {
+									superclass = lc.getSuperclassFromLineArray(tempArray);
+									if (superclass != "") {
+
+										beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("superclass ", "extends "));
+										//											beginningLine = commitPart.substring(0, commitPart.indexOf(
+										//												superclass.replace("superclass ", "extends ")))
+										//												.split("\\n").length-1;
+										changes.add(createChange((byte) 1, beginningLine, qualifiedClassName, 
+												false, superclass));
+										alreadyProcessed = true;
 									}
 								}
-							} else {
-								// removals
-								superclass = "";
-								interfaces = "";
-								temp = lc.getNewPartsOfLine(lineBefore.substring(1), line.substring(1)).trim();
-								if (!temp.equals("")) {
-									tempArray = temp.split("\\s");
-									String[] tempArray2 = new String[tempArray.length-2];
-									if (lineBefore.contains("extends") && !line.contains("extends")) {
-										superclass = lc.getSuperclassFromLineArray(tempArray);
-										if (superclass != "") {
-											beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("superclass ", "extends "));
-											//											beginningLine = commitPart.substring(0, commitPart.indexOf(
-											//													superclass.replace("superclass ", "extends ")))
-											//													.split("\\n").length-1;
-											changes.add(createChange((byte) -1, beginningLine, qualifiedClassName, 
-													false, superclass));
-											alreadyProcessed = true;
-										}
-										System.arraycopy(tempArray, 2, tempArray2, 0, tempArray.length-2);
-									}
-									if (temp.contains("implements")) {
-										interfaces = lc.getInterfacesFromLineArray(tempArray);
-										if (!interfaces.equals("")) {
-
-											beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("interfaces ", "implements "));
-											changes.add(createChange((byte) -1, beginningLine, qualifiedClassName, 
-													false, interfaces));
-											alreadyProcessed = true;
-										}
+								if (temp.contains("implements")) {
+									interfaces = lc.getInterfacesFromLineArray(tempArray);
+									if (interfaces != "") {
+										beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("interfaces ", "implements "));
+										//											beginningLine = commitPart.substring(0, commitPart.indexOf(
+										//													interfaces.replace("interfaces ", "implements ")))
+										//													.split("\\n").length-1;
+										changes.add(createChange((byte) 1, beginningLine, qualifiedClassName, 
+												false, interfaces));
+										alreadyProcessed = true;
 									}
 								}
-								if (temp.contains("extends") || temp.contains("implements")) {
-									modifications.delete(0, modifications.length());
-								}
-								addRem = -128;
 							}
+
+							// removals
+							superclass = "";
+							interfaces = "";
+							temp = lc.getNewPartsOfLine(lineBefore.substring(1), line.substring(1)).trim();
+							if (temp.endsWith(",")) {
+								temp = temp.substring(0, temp.length()-1);
+							}
+							if (!temp.equals("")) {
+								tempArray = temp.split("\\s");
+								if (lineBefore.contains("extends") && !line.contains("extends")) {
+									superclass = lc.getSuperclassFromLineArray(tempArray);
+									if (superclass != "") {
+										beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("superclass ", "extends "));
+										//											beginningLine = commitPart.substring(0, commitPart.indexOf(
+										//													superclass.replace("superclass ", "extends ")))
+										//													.split("\\n").length-1;
+										changes.add(createChange((byte) -1, beginningLine, qualifiedClassName, 
+												false, superclass));
+										alreadyProcessed = true;
+									}
+								}
+								if (temp.contains("implements")) {
+									interfaces = lc.getInterfacesFromLineArray(tempArray);
+									if (!interfaces.equals("")) {
+
+										beginningLine = getBeginningLineOfChange(commitPart, interfaces.replace("interfaces ", "implements "));
+										changes.add(createChange((byte) -1, beginningLine, qualifiedClassName, 
+												false, interfaces));
+										alreadyProcessed = true;
+									}
+								}
+							}
+							if (temp.contains("extends") || temp.contains("implements")) {
+								modifications.delete(0, modifications.length());
+							}
+							addRem = -128;
+
 
 							
 							if (changes == null) {

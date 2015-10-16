@@ -82,6 +82,8 @@ public class GitConnectorCmdL {
 		String initialCommitHash = "";
 		String[] revlistCommand = {"E:\\Program Files (x86)\\Git\\bin\\git.exe", "rev-list", "--max-parents=0", "HEAD"};
 		String[] diffCommand = {"E:\\Program Files (x86)\\Git\\bin\\git.exe", "diff", "", optionalClass};
+		String[] logCommandForInitialCommit = {"E:\\Program Files (x86)\\Git\\bin\\git.exe", "log", "-p", "--pretty=email", 
+				"--reverse", "", optionalClass};
 		ProcessBuilder pb = new ProcessBuilder(revlistCommand);
 		try {
 			pb.directory(repoDirectory);
@@ -98,8 +100,20 @@ public class GitConnectorCmdL {
 			s = new Scanner(p.getInputStream());
 			codeBase = new StringBuilder("");
 			while (s.hasNextLine()) {
-//				System.out.println(s.nextLine());
 				codeBase.append(s.nextLine() + "\n");
+			}
+			if (codeBase.toString().equals("")) {
+				// Set second position to initialCommitHash only to get initial commit.
+				logCommandForInitialCommit[4] = initialCommitHash;
+				pb = new ProcessBuilder(logCommandForInitialCommit);
+				pb.directory(repoDirectory);
+				p = pb.start();
+				s = new Scanner(p.getInputStream());
+				codeBase = new StringBuilder("");
+				while (s.hasNextLine()) {
+					codeBase.append(s.nextLine() + "\n");
+				}
+				
 			}
 		} catch (IOException ioe) {
 			ioe.printStackTrace();

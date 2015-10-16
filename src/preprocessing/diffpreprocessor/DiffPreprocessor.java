@@ -8,8 +8,8 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import preprocessing.diffs.Change;
-import preprocessing.diffs.Changes;
+import preprocessing.diffs.ClassChanges;
+import preprocessing.diffs.Commit;
 import preprocessing.diffs.PreprocessedDiff;
 import projecttree.Node;
 import projecttree.NodeType;
@@ -20,12 +20,12 @@ public class DiffPreprocessor {
 
 	private String input;
 	private PreprocessedDiff prepDiff;
-	private LinkedList<Changes> changesList;
+	private LinkedList<Commit> changesList;
 	private Node root;
 	
 	public DiffPreprocessor() {
 		prepDiff = new PreprocessedDiff();
-		changesList = new LinkedList<Changes>();
+		changesList = new LinkedList<Commit>();
 		root = new Node("ProjectRoot", NodeType.PROJECT);
 	}
 	
@@ -55,8 +55,8 @@ public class DiffPreprocessor {
 	
 	public void preprocessCodeBase() {
 		input = Cleaner.cleanInput(input);
-		Changes changes = null;
-		Change change = null;
+		Commit changes = null;
+		ClassChanges change = null;
 		String lineInfoRegex = "\\-[\\d]{1,4},[\\d]{1,2}\\s\\+[\\d]{1,4},[\\d]{1,2}";
 		Pattern lineInfoPattern = Pattern.compile(lineInfoRegex);
 		Matcher lineInfoMatcher;
@@ -93,7 +93,7 @@ public class DiffPreprocessor {
 						continue;
 					} else {
 						if (changes == null) {
-							changes = new Changes();
+							changes = new Commit();
 						}
 						changes.add(change);
 						changesList.add(changes);
@@ -110,7 +110,7 @@ public class DiffPreprocessor {
 	 * @param diffCode
 	 * @return
 	 */
-	private Change separateWholeClass(String diffCode) {
+	private ClassChanges separateWholeClass(String diffCode) {
 		int actualLine = -1,
 			// for getting correct change lines, increments in each iteration. 
 			beginningLine = -1;
@@ -121,7 +121,7 @@ public class DiffPreprocessor {
 		ModificationType modificationType = null;
 		String qualifiedClassName = null;
 		StringBuilder modifications = new StringBuilder();
-		Changes changes = null;
+		Commit changes = null;
 		String[] lines = diffCode.split("\\r?\\n");
 		for (String line : lines) {
 			if (firstLine && line.equals("")) {
@@ -140,7 +140,7 @@ public class DiffPreprocessor {
 				}
 				// necessary for additions directly succeeding removals
 				if (changes == null) {
-					changes = new Changes();
+					changes = new Commit();
 				}
 				if (addRem == -128) {
 					addRem = 1;
@@ -155,7 +155,7 @@ public class DiffPreprocessor {
 				}
 				// necessary for additions directly succeeding removals
 				if (changes == null) {
-					changes = new Changes();
+					changes = new Commit();
 				}
 				if (addRem == -128) {
 					addRem = -1;
@@ -170,7 +170,7 @@ public class DiffPreprocessor {
 				return null;
 			}
 		}
-		return new Change(qualifiedClassName, beginningLine, addRem, 
+		return new ClassChanges(qualifiedClassName, beginningLine, addRem, 
 				modificationType, true, modifications.toString());
 	}
 	
@@ -201,7 +201,7 @@ public class DiffPreprocessor {
 		DiffAnalyzer da = new DiffAnalyzer();
 		LineChecker lc = new LineChecker();
 		StringBuilder modifications = new StringBuilder();
-		Changes changes = null;
+		Commit changes = null;
 		String qualifiedClassName = null;
 		// for iterating over each line
 		String[] lines;
@@ -231,7 +231,7 @@ public class DiffPreprocessor {
 //					changesList.add(changes);
 //					changes = null;
 //				}
-				changes = new Changes();
+				changes = new Commit();
 				changes.setCommitHash(mCommitExtract.group());
 				continue;
 			}
@@ -250,7 +250,7 @@ public class DiffPreprocessor {
 			}
 			// if no line info found, check if commitPart starts with "[PATCH]", if not, iterate over lines.
 			else if (!commitPart.startsWith("[PATCH]")) {
-				Change change = new Change();
+				ClassChanges change = new ClassChanges();
 				root = null;
 				root = new Node("ProjectRoot", NodeType.PROJECT);
 				da.analyzeDiff(commitPart, root);
@@ -285,12 +285,12 @@ public class DiffPreprocessor {
 
 				if (lc.isWholeClass(commitPart)) {
 					// may return null, if there are different types of lines (existent, removed, added)
-					Change c = separateWholeClass(commitPart);
+					ClassChanges c = separateWholeClass(commitPart);
 					if (c == null) {
 						continue;
 					}
 					if (changes == null) {
-						changes = new Changes();
+						changes = new Commit();
 					}
 					changes.add(c);
 					changesList.add(changes);
@@ -425,7 +425,7 @@ public class DiffPreprocessor {
 
 							
 							if (changes == null) {
-								changes = new Changes();
+								changes = new Commit();
 							}
 							// modifications must contain something AND if the line has not been processed before and don't equals lineBefore!
 							if (modifications != null && modifications.toString() != "" && 
@@ -461,7 +461,7 @@ public class DiffPreprocessor {
 						if (lineBeforeWasAdded == 'a') {
 							// Attention! Removals of interfaces and superclasses are treated in addition case!
 							if (changes == null) {
-								changes = new Changes();
+								changes = new Commit();
 							}
 							if (change.getChanges() != null && change.getChanges() != "" && 
 									change.getChanges().length() > 0) {
@@ -473,7 +473,7 @@ public class DiffPreprocessor {
 						// necessary for removals directly succeeding additions
 						if (addRem > -1 && !modifications.toString().equals("")) {
 							if (changes == null) {
-								changes = new Changes();
+								changes = new Commit();
 							}
 //TODO
 							beginningLine = getBeginningLineOfChange(commitPart, modifications.toString());
@@ -496,7 +496,7 @@ public class DiffPreprocessor {
 					} else {
 						if (addRem != -128 && !modifications.toString().equals("")) {
 							if (changes == null) {
-								changes = new Changes();
+								changes = new Commit();
 							}	
 
 							beginningLine = getBeginningLineOfChange(commitPart, modifications.toString());
@@ -603,12 +603,12 @@ public class DiffPreprocessor {
 		return qualifiedClassName;
 	}
 	
-	private Change createChange(byte addRem, int beginningLine, String qualifiedClassName, boolean isWholeClass,
+	private ClassChanges createChange(byte addRem, int beginningLine, String qualifiedClassName, boolean isWholeClass,
 			String modifications) {
 
 		ModifiesTypeExaminer mte = new ModifiesTypeExaminer();
 		ProjectTreeSearcher pts = new ProjectTreeSearcher();
-		Change change = new Change();
+		ClassChanges change = new ClassChanges();
 		Node containingPackage = null,
 			 containingClass = null,
 			 modifiedMethod = null;

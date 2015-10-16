@@ -4,7 +4,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.emftext.language.java.containers.CompilationUnit;
 import org.emftext.language.java.resource.java.util.JavaResourceUtil;
 
-import preprocessing.diffs.Change;
+import preprocessing.diffs.ClassChanges;
 
 /**
  * Shall validate Change objects within a Changes object contained by a PreprocessedDiff.
@@ -33,7 +33,7 @@ public class ChangesValidator {
 	 * @param change
 	 * @return
 	 */
-	public EObject validateChange(Change change) {
+	public EObject validateChange(ClassChanges change) {
 		// TODO just for units smaller than class and not import or package statements
 		EObject abstractSyntaxTreeRoot = JavaResourceUtil.getResourceContent(
 				wrapCodeWithClass(change.getChanges(), change.getClassName()));

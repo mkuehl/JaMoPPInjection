@@ -123,6 +123,7 @@ public class LineChecker {
 		for (int i = 0; i < lines.length; i++) {
 			if (i==0 && (lines[i].equals("\n") || lines[i].equals(""))) {
 				firstLineAffected = false;
+				count = count - (firstLineAffected ? 0 : 1);
 				continue;
 			}
 			if (lines[i].startsWith("+")) {
@@ -132,12 +133,13 @@ public class LineChecker {
 			} else if (lines[i].equals("\\ No newline at end of file")) {
 			//everything that might come in subsequent lines won't affect the modification anymore.
 				//subtract one for the actual line and one if the first line had a modification sign.
-				count = i - (firstLineAffected ? 0 : 1);
+				count = (i == lines.length-1 ? count : i) - 1;
 				break;
 			} else {
 				return false;
 			}
 		}
+		
 		if (count == plus || count == minus) {
 			return true;
 		}

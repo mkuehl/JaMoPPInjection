@@ -19,8 +19,8 @@ import org.emftext.language.java.resource.java.util.JavaResourceUtil;
 
 import preprocessing.diffpreprocessor.DiffPreprocessor;
 import preprocessing.diffpreprocessor.ModificationType;
-import preprocessing.diffs.Change;
-import preprocessing.diffs.Changes;
+import preprocessing.diffs.ClassChanges;
+import preprocessing.diffs.Commit;
 import preprocessing.diffs.PreprocessedDiff;
 import preprocessing.gitconnector.GitConnectorCmdL;
 import deltatransformation.DeltaJCreator;
@@ -50,8 +50,8 @@ public class JaMoPPInjection {
 		DeltaJUnit dju = djc.createDeltaJUnit();
 
 		// for code base
-		Changes codeBases = diffPre.getPrepDiff().next();
-		for (Change base : codeBases) {
+		Commit codeBases = diffPre.getPrepDiff().next();
+		for (ClassChanges base : codeBases) {
 			code += base.getChanges();
 			
 			//Parse using JaMoPP
@@ -62,7 +62,7 @@ public class JaMoPPInjection {
 			code = "";
 
 			// TODO adjust name and path to your flavor and system
-			djc.addToDeltaString(d, new Change());
+			djc.addToDeltaString(d, new ClassChanges());
 			djc.closeDeltaString();
 		}
 
@@ -108,7 +108,7 @@ public class JaMoPPInjection {
 				int size = prepDiff.size(),
 					diffNo = 0;
 				while (prepDiff.hasNext() || diffNo < size) {
-					Changes changes = prepDiff.getChanges();
+					Commit changes = prepDiff.getChanges();
 					Delta tempDelta = djc.createNewDelta(dju, "Delta" + ++diffNo);
 					if (changes.size() > 0) {
 						changes.setToFirst();
@@ -117,7 +117,7 @@ public class JaMoPPInjection {
 						//TODO
 						//TODO
 						for (int k = 0; k < changes.size(); k++) {
-							Change c =  changes.getChange(k);
+							ClassChanges c =  changes.getChange(k);
 							String packageName = "",
 								   className = "";
 

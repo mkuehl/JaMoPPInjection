@@ -28,7 +28,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.emftext.language.java.resource.java.util.JavaResourceUtil;
 
 import preprocessing.diffpreprocessor.ModificationType;
-import preprocessing.diffs.Change;
+import preprocessing.diffs.ClassChanges;
 
 import com.max.jamoppinjection.ChangesValidator;
 
@@ -77,40 +77,6 @@ public class DeltaJCreator {
 		// Returning the freshly created Delta object. It is much easier to work
 		// with is after it is correctly added to the AST.
 		return d;
-	}
-	
-	/**
-	 * Creates a DeltaAction of the specified type. The parameter string has the following semantic:
-	 * a = AddsUnit, m = ModifiesUnit, r = RemovesUnit;
-	 * ModifiesUnits have to be further distinguished followingg this semantics:
-	 * acbmd = AddsClassBodyMemberDeclaration, ai = AddsImport, ail = AddsInterfacesList,
-	 * am = AddsMember, amd = AddsMemberDeclaration, aec = AddsEnumConstant, asc = AddsSuperclass,
-	 * rf = RemovesField, ri = RemovesImport, ril = RemovesInterfacesList, rm = RemovesMethod,
-	 * rsc = RemovesSuperclass, 
-	 * Example for type: mrm = modifies->removes method
-	 * @param type
-	 * @return
-	 */
-	public DeltaAction createDeltaAction(String type) {
-		switch (type) {
-		case "a":
-			return factory.createAddsUnit();
-		case "r":
-			return factory.createRemovesUnit();
-		default:
-
-			ModifiesUnit mu = factory.createModifiesUnit();
-			switch (type.substring(1)) {
-			case "acbmd":
-				mu.getModifiesClassMembers().add(
-						factory.createAddsClassBodyMemberDeclaration());
-				break;
-			case "rm":
-				mu.getModifiesClassMembers().add(factory.createRemovesMethod());
-				break;
-			}
-			return mu;
-		}
 	}
 	
 	/**
@@ -215,7 +181,7 @@ public class DeltaJCreator {
 	 * @param d
 	 * 			delta to write in file.
 	 */
-	public void addToDeltaString(Delta d, Change c) {
+	public void addToDeltaString(Delta d, ClassChanges c) {
 		DeltaActionCreator dac = new DeltaActionCreator();
 		StringBuilder delta = new StringBuilder("");
 

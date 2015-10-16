@@ -18,7 +18,7 @@ import org.deltaj.deltaJ.RemovesSuperclass;
 import org.eclipse.emf.ecore.EObject;
 
 import preprocessing.diffpreprocessor.ModificationType;
-import preprocessing.diffs.Change;
+import preprocessing.diffs.ClassChanges;
 import projecttree.Node;
 import projecttree.NodeType;
 
@@ -33,7 +33,7 @@ public class DeltaActionCreator {
 	 * @return String of changes correctly separated and succeeding an "adds".
 	 */
 	public String createDeltaActionsForManyMembers(LinkedList<String> members, EObject ma, 
-			Change c) {
+			ClassChanges c) {
 		StringBuilder affectedMembers = new StringBuilder();
 		int openingBrackets = 0,
 			closingBrackets = 0;

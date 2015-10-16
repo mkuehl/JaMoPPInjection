@@ -11,18 +11,18 @@ import java.util.NoSuchElementException;
  * @author Max
  *
  */
-public class PreprocessedDiff implements Iterable<Changes>, Iterator<Changes> {
+public class PreprocessedDiff implements Iterable<Commit>, Iterator<Commit> {
 
 	/* 
 	 * Contains all changes and necessary meta information. Each change object
 	 * is designed to keep all changes of a particular class.
 	 */
-	private LinkedList<Changes> modificationList;
+	private LinkedList<Commit> modificationList;
 	
 	int index;
 
 	public PreprocessedDiff() {
-		modificationList = new LinkedList<Changes>();
+		modificationList = new LinkedList<Commit>();
 		index = 0;
 	}
 	
@@ -31,13 +31,13 @@ public class PreprocessedDiff implements Iterable<Changes>, Iterator<Changes> {
 	 * list. If no list object exists or the parameter is null, nothing is added.
 	 * @param changes
 	 */
-	public void add(Changes changes) {
+	public void add(Commit changes) {
 		if (modificationList != null && changes != null) {
 			modificationList.add(changes);
 		}
 	}
 	
-	public void setModificationList(LinkedList<Changes> changesList) {
+	public void setModificationList(LinkedList<Commit> changesList) {
 		modificationList = changesList;
 	}
 	
@@ -53,7 +53,7 @@ public class PreprocessedDiff implements Iterable<Changes>, Iterator<Changes> {
 	 * Returns changes stored in modificationList. If null, null is returned.
 	 * @return
 	 */
-	public Changes getChanges() {
+	public Commit getChanges() {
 		return modificationList != null ? get(index) : null;
 	}
 	
@@ -89,19 +89,19 @@ public class PreprocessedDiff implements Iterable<Changes>, Iterator<Changes> {
 	}
 
 	@Override
-	public Iterator<Changes> iterator() {
+	public Iterator<Commit> iterator() {
 		return this;
 	}
 
 	@Override
-	public Changes next() {
+	public Commit next() {
 		if (index == modificationList.size()) {
 			throw new NoSuchElementException();
 		}
 		return modificationList.get(index++);
 	}
 	
-	public Changes previous() {
+	public Commit previous() {
 		if (index < 0) {
 			throw new NoSuchElementException();
 		}
@@ -110,7 +110,7 @@ public class PreprocessedDiff implements Iterable<Changes>, Iterator<Changes> {
 
 	
 	public void clear() {
-		modificationList = new LinkedList<Changes>();
+		modificationList = new LinkedList<Commit>();
 		index = 0;
 	}
 	
@@ -120,7 +120,7 @@ public class PreprocessedDiff implements Iterable<Changes>, Iterator<Changes> {
 	 * @param p_index
 	 * @return
 	 */
-	private Changes get(int p_index) {
+	private Commit get(int p_index) {
 		int size = modificationList.size();
 		return p_index >= size ? modificationList.get(size - 1) : 
 			modificationList.get(p_index);

@@ -169,10 +169,10 @@ public class Node {
 	 * 
 	 * @param containingClass
 	 * @param affectedMember
-	 * @param removeOrAdd - false = remove, true = add
+	 * @param linesRemoved 
 	 */
-	private void updateLinesOfSubsequentMembers(Node containingClass, Node affectedMember, boolean removeOrAdd) {
-		int affectedLines = (removeOrAdd ? 1 : -1) * affectedMember.getLength()+1;
+	private void updateLinesOfSubsequentMembers(Node containingClass, Node affectedMember, boolean linesRemoved) {
+		int affectedLines = (linesRemoved ? -1 : 1) * affectedMember.getLength()+1;
 		HashSet<Node> members = containingClass.getAllChildrenOfType(NodeType.METHOD);
 		members.addAll(containingClass.getAllChildrenOfType(NodeType.FIELD));
 		for (Node member : members) {

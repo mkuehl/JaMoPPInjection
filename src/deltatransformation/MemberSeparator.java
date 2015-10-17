@@ -13,7 +13,8 @@ public class MemberSeparator {
 		LinkedList<String> separatedMembers = new LinkedList<String>();
 		// Gets filled with the members signature and body. For methods, this takes several iterations.
 		String member = "";
-		boolean isMember = false;
+		boolean isMember = false,
+				isMethodMember = false;
 
 		// matches packages.
 		String packageRegex = "package\\s[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*;";
@@ -23,19 +24,14 @@ public class MemberSeparator {
 		String importRegex = "import\\s[a-zA-Z0-9_]+(\\.([a-zA-Z0-9_]+|\\*))+;";
 		Pattern importPattern = Pattern.compile(importRegex);
 		Matcher importMatcher;
-//		// matches superclasses, like packages but without the semicolon.
-//		String superclassRegex = "extends\\s[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*";
-//		Pattern superclassPattern = Pattern.compile(superclassRegex);
-//		Matcher superclassMatcher;
-//		// matches interfaces, like packages but without the semicolon.
-//		String interfaceRegex = "implements\\s[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*([\\s]*,[\\s]*[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)+)*";
-//		Pattern interfacePattern = Pattern.compile(interfaceRegex);
-//		Matcher interfaceMatcher;
 		// matches methods, optional modifier, return type, name, starting bracket for param list.
-		String memberRegex = "(public|protected|private)?\\s[a-zA-Z0-9_]+\\s[a-zA-Z0-9_]+\\s?\\(?";
+		String memberRegex = "^(\\s)*(public|protected|private)?\\s[a-zA-Z0-9_]+\\s[a-zA-Z0-9_]+\\s?(\\(|=|;)";
 		Pattern memberPattern = Pattern.compile(memberRegex);
 		Matcher memberMatcher;
-		//			String[] sa = input.split("@@");
+		
+		String qualifiedMethodCallsRegex = "^(\\s)*[a-zA-Z0-9_\\.]*[a-zA-Z0-9_]+\\s?(\\(|=)";
+		Pattern qualifiedMethodCallsPattern = Pattern.compile(qualifiedMethodCallsRegex);
+		Matcher qualifiedMethodCallsMatcher;
 		// to ensure, that the member is completed, count opening and closing curly brackets.
 		int openedCurlyBrackets = 0,
 			closedCurlyBrackets = 0;
@@ -56,9 +52,8 @@ public class MemberSeparator {
 		for (String line : lines) {
 			packageMatcher = packagePattern.matcher(line);
 			importMatcher = importPattern.matcher(line);
-//			superclassMatcher = superclassPattern.matcher(line);
-//			interfaceMatcher = interfacePattern.matcher(line);
 			memberMatcher = memberPattern.matcher(line);
+			qualifiedMethodCallsMatcher = qualifiedMethodCallsPattern.matcher(line);
 			
 			if (packageMatcher.find()) {
 				separatedMembers.add(line);
@@ -69,16 +64,7 @@ public class MemberSeparator {
 				separatedMembers.add(line);
 				continue;
 			}
-//			
-//			if (interfaceMatcher.find()) {
-//				separatedMembers.add(interfaceMatcher.group());
-//				continue;
-//			}
-//			
-//			if (superclassMatcher.find()) {
-//				separatedMembers.add(superclassMatcher.group());
-//				continue;
-//			}
+			
 			/*
 			 * if memberMatcher finds a member and this member is not inside a member (only 
 			 * applies for methods), which is not allowed unless with not yet supported 
@@ -120,6 +106,21 @@ public class MemberSeparator {
 				separatedMembers.add(member);
 				member = "";
 				isMember = false;
+				continue;
+			}
+			
+			if (qualifiedMethodCallsMatcher.find() && !isMember) {
+				isMethodMember = true;
+				member += line + "\n";
+			}
+			
+			if (isMethodMember) {
+				// DANGEROUS ASSUMPTION: method calls and assignments end with ; no matter how many lines they involve. 
+				if (line.endsWith(";")){
+					// if line ends with ";" the member call ends.
+					separatedMembers.add(member);
+					isMethodMember = false;
+				}
 			}
 		}
 		return separatedMembers;

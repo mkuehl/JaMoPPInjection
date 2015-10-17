@@ -62,7 +62,7 @@ public class JaMoPPInjection {
 			code = "";
 
 			// TODO adjust name and path to your flavor and system
-			djc.addToDeltaString(d, new ClassChanges());
+			djc.addToDeltaString(d, new ClassChanges(), "");
 			djc.closeDeltaString();
 		}
 
@@ -130,7 +130,8 @@ public class JaMoPPInjection {
 							if (k == changes.size()-2) {
 								
 							}
-							djc.addToDeltaString(tempDelta, c);
+							djc.addToDeltaString(tempDelta, c, "Hash: " + changes.getCommitHash() 
+									+ "\nCommitMessage:" + changes.getCommitMessage());
 
 							// interfaces and superclasses have already a semicolon, if the deltastring has one as well, don't close it!
 							if (c.getTypeOfChange().equals(ModificationType.CLASSADDITION)/* || 

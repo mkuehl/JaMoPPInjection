@@ -181,7 +181,7 @@ public class DeltaJCreator {
 	 * @param d
 	 * 			delta to write in file.
 	 */
-	public void addToDeltaString(Delta d, ClassChanges c) {
+	public void addToDeltaString(Delta d, ClassChanges c, String commitComment) {
 		DeltaActionCreator dac = new DeltaActionCreator();
 		StringBuilder delta = new StringBuilder("");
 
@@ -190,6 +190,12 @@ public class DeltaJCreator {
 			return;
 		}
 		if (deltaString == "") {
+			//add line with commitMessage, if not empty.
+			delta.append("/*\n");
+			for (String line : commitComment.split("\\n")) {
+				delta.append("* " + line + (commitComment != "" ? "\n" : ""));
+			}
+			delta.append("*/\n");
 			delta.append("delta " + d.getName() + " {\n\t");
 		} 
 
@@ -213,18 +219,8 @@ public class DeltaJCreator {
 			if (da instanceof AddsUnit) {
 				AddsUnit au = (AddsUnit) da;
 				for (Source s : au.getUnit().getSource().getSources()) {
-					// if more than one " class " is contained, the array will get bigger than 2. Then take the changes instead.
-//					int numberOfClassesPlusOne = s.getDelta().split(" class ").length;
-//					if (numberOfClassesPlusOne == 2) {
+					// add all classes subsequently with own "adds { " clauses.
 					delta.append("adds { " + s.getDelta() + "\n");
-//					} else if (numberOfClassesPlusOne > 2) {
-//					// else if case applies normally only to non-coredelta class additions.
-//						// better check the changes as well
-//						numberOfClassesPlusOne = c.getChanges().split("class").length;
-//						if (numberOfClassesPlusOne == 2) {
-//							delta.append("adds { " + c.getChanges() + "\n");
-//						}
-//					}
 				}
 			} else if (da instanceof RemovesUnit) {
 				RemovesUnit ru = (RemovesUnit) da;
@@ -249,8 +245,6 @@ public class DeltaJCreator {
 				}
 				delta.append("}\n");
 			} else {
-				//					RemovesUnit ru = (RemovesUnit) da;
-				//					for (RemovesAction ra : ru.)
 			}
 		}
 

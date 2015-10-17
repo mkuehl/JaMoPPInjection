@@ -37,10 +37,10 @@ public class ProjectTreeSearcher {
 							//TODO beginning line in project tree not set correctly
 							// following standard formatting, the new lines begin either at the line following the signature or at the line preceding the last "}".
 							if (endline == beginningLine) {
-								method.setLength(method.getLength()+length);
+//								method.setLength(method.getLength()+length);
 								return method.getName() + "#e";
 							} else if (startline == beginningLine) {
-								method.setLength(method.getLength()+length);
+//								method.setLength(method.getLength()+length);
 								return method.getName() + "#s";
 							} else if (numberOfCheckedMethods == methods.size()) {
 								return "#none";
@@ -76,11 +76,12 @@ public class ProjectTreeSearcher {
 							numberOfCheckedMethods++;
 							// +1, because beginning line is signature!
 							int startline = method.getBeginningLine()+1,
-								endline = method.getBeginningLine()+method.getLength();
+								// -1, because the real endline should only contain the closing brackets.
+								endline = method.getBeginningLine()+method.getLength()-1;
 							//TODO beginning line in project tree not set correctly
 							// following standard formatting, the new lines begin either at the line following the signature or at the line preceding the last "}".
 							if (endline == beginningLine || startline == beginningLine) {
-								method.setLength(method.getLength()+length);
+//								method.setLength(method.getLength()+length);
 								return method;
 							} else if (numberOfCheckedMethods == methods.size()) {
 								return null;

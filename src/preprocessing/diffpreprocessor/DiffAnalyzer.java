@@ -113,6 +113,9 @@ public class DiffAnalyzer {
 		m = methodPattern.matcher(tempDiff);
 		while(m.find()) {
 			String t = m.group();
+			if (t.contains("printText")) {
+				System.out.println();
+			}
 //			String tt = (tempDiff.substring(0, m.end()));
 //			String[] tta = tt.split("\\n");
 			// -1 due to the linebreak of the last line.
@@ -120,6 +123,10 @@ public class DiffAnalyzer {
 			// -1 because first line is counted.
 			String ttt = tempDiff.substring(m.end());
 			int length = getLengthOfMember(ttt)-1;
+			// if name was changed.
+			if (beginningLine == -1) {
+				continue;
+			}
 			// methods might have two space characters. If so, extract the name from the second, if not, extract it from the first.
 			String name = t.substring(t.indexOf(" ")+1, t.indexOf("("));
 			String returnType = "";
@@ -266,7 +273,9 @@ public class DiffAnalyzer {
 
 		String[] lines = memberCode.split("\\r?\\n");
 		for (String line : lines) {
-			lineCount++;
+			if (!line.startsWith("-")) {
+				lineCount++;
+			}
 			/*
 			 * Checks if toCheck contains opening curly brackets. If so, openedCurlyBrackets
 			 * gets incremented and toCheck is cut to the last match.
@@ -298,6 +307,9 @@ public class DiffAnalyzer {
 	private int getBeginningLineOfMember(String diff, String memberCode) {
 		String[] lines = diff.split("\\r?\\n");
 		for (int i = 0; i < lines.length; i++) {
+			if (lines[i].contains(memberCode) && lines[i].startsWith("-")) {
+				return -1;
+			}
 			if (lines[i].contains(memberCode)) {
 				return i + (lines[0].equals("") ? 0 : 1);
 			}

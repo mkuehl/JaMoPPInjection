@@ -26,7 +26,7 @@ public class GitConnectorCmdL {
 	 */
 	public GitConnectorCmdL(String pathToGitExe, String usrnam, String pwd) {
 		gitExePath = pathToGitExe;
-		log = new Logger("E:\\loglog.txt", false);
+		log = new Logger("E:\\loglog.txt", true);
 	}
 
 	/**
@@ -35,6 +35,7 @@ public class GitConnectorCmdL {
 	 * @param uri - repository to be cloned
 	 */
 	public void getRepo(String pathToDir, String uri) {
+		log.writeToLog(this.getClass().toString() + " : Creating locale git repository...");
 		File localDir = null;
 		localDir = new File(pathToDir);
 
@@ -55,13 +56,13 @@ public class GitConnectorCmdL {
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("Failed to create locale git repository");
-			log.writeToLog(this.getClass().toString() + " : Failed to create locale git repository");
+			log.writeToLog(this.getClass().toString() + " : " + log.getFailMessage() + ".");
 			
 			return;
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			System.out.println("Failed to create locale git repository. Process got stuck.");
-			log.writeToLog(this.getClass().toString() + " : Failed to create locale git repository. Process got stuck.");
+			log.writeToLog(this.getClass().toString() + " : " + log.getFailMessage() + ".");
 			return;
 		}
 		/*
@@ -73,7 +74,7 @@ public class GitConnectorCmdL {
 			p.destroy();
 		}
 		System.out.println("Successfully created locale git repository");
-		log.writeToLog(this.getClass().toString() + " : Successfully created locale git repository");
+		log.writeToLog(this.getClass().toString() + " : " + log.getSuccessMessage() + ".");
 	}
 	
 	/**
@@ -84,6 +85,7 @@ public class GitConnectorCmdL {
 	 * @param optionalClass - if just changes for a particular class are required. Otherwise use ""
 	 */
 	public void extractBaseline(String pathToDir, String latestCommitHash, String optionalClass) {
+		log.writeToLog(this.getClass().toString() + " : Extracting baseline code...");
 		Process p = null;
 		File repoDirectory = new File(pathToDir);
 		String initialCommitHash = "";
@@ -125,13 +127,12 @@ public class GitConnectorCmdL {
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
 			System.out.println("Failed to extract baseline code.");
-			log.writeToLog(this.getClass().toString() + " : Failed to extract baseline code.");
+			log.writeToLog(this.getClass().toString() + " : " + log.getFailMessage() + ".");
 			return;
 		}
 		
 		System.out.println("Successfully extracted baseline code.");
-
-		log.writeToLog(this.getClass().toString() + " : Successfully extracted baseline code.");
+		log.writeToLog(this.getClass().toString() + " : " + log.getSuccessMessage() + ".");
 	}
 	
 	/**
@@ -145,6 +146,7 @@ public class GitConnectorCmdL {
 	public void executeDiff(String pathToDir, int startNumberOfCommitFromHEAD, int endNumberOfCommitFromHEAD, 
 			String optionalClass) {
 		System.out.println("LOG: ");
+		log.writeToLog(this.getClass().toString() + " : Requesting commit history...");
 		Process p = null;
 		String range = "HEAD~" + startNumberOfCommitFromHEAD + "..HEAD~" + endNumberOfCommitFromHEAD;
 		// set git programm location, command, options
@@ -166,10 +168,10 @@ public class GitConnectorCmdL {
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("Failed to get requested commit history");
-			log.writeToLog(this.getClass().toString() + " : Failed to get requested commit history.");
+			log.writeToLog(this.getClass().toString() + " : " + log.getFailMessage() + ".");
 		}
 		System.out.println("Successfully got requested commit history.");
-		log.writeToLog(this.getClass().toString() + " : Successfully got requested commit history.");
+		log.writeToLog(this.getClass().toString() + " : " + log.getSuccessMessage() + ".");
 		
 	}
 	

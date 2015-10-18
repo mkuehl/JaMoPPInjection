@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.LinkedList;
 
+import logger.Logger;
+
 import org.deltaj.deltaJ.AddsUnit;
 import org.deltaj.deltaJ.Delta;
 import org.deltaj.deltaJ.DeltaAction;
@@ -42,8 +44,10 @@ public class DeltaJCreator {
 	
 	private String deltaString = "";
 
+	private Logger log;
+
 	public DeltaJCreator() {
-		
+		log = new Logger("E:\\loglog.txt", false);
 	}
 	
 	public DeltaJUnit createDeltaJUnit() {
@@ -60,7 +64,7 @@ public class DeltaJCreator {
 	 * @return
 	 */
 	public Delta createNewDelta(DeltaJUnit parent, String deltaName) {
-
+		log.writeToLog(this.getClass().toString() + " : Creating new delta...");
 		// Creating Delta object which is a node in the AST.
 		Delta d = factory.createDelta();
 
@@ -76,6 +80,8 @@ public class DeltaJCreator {
 
 		// Returning the freshly created Delta object. It is much easier to work
 		// with is after it is correctly added to the AST.
+
+		log.writeToLog(this.getClass().toString() + " : " + log.getSuccessMessage() + ".");
 		return d;
 	}
 	
@@ -94,6 +100,7 @@ public class DeltaJCreator {
 	 */
 	public void addJavaUnit(Delta parent, EObject jamoppParsedClass, String packageName, String className, 
 			byte addRem, ModificationType typeOfChange) {
+		log.writeToLog(this.getClass().toString() + " : Adding new DeltaAction...");
 		if (typeOfChange.equals(ModificationType.CLASSADDITION)) {
 			// Trigger transformation of JaMoPP to DeltaJ AST
 			JavaCompilationUnit jcu = fancyJamoppToDeltaJTransformation(jamoppParsedClass);
@@ -105,6 +112,8 @@ public class DeltaJCreator {
 		
 			addJavaModifiesUnit(parent, typeOfChange, jamoppParsedClass);
 		}
+
+		log.writeToLog(this.getClass().toString() + " : " + log.getSuccessMessage() + ".");
 	}
 	
 	private void addJavaAddsUnit(Delta parent, JavaCompilationUnit deltaCode) {
@@ -157,6 +166,8 @@ public class DeltaJCreator {
 	 */
 	
 	private JavaCompilationUnit fancyJamoppToDeltaJTransformation(EObject jamoppAST) {
+
+		log.writeToLog(this.getClass().toString() + " : Creating new JavaCompilationUnit...");
 		if (jamoppAST == null) {
 			return null;
 		}
@@ -168,7 +179,8 @@ public class DeltaJCreator {
 		s.setDelta(JavaResourceUtil.getText(jamoppAST).trim());
 		ss.getSources().add(s);
 		jcu.setSource(ss);
-		
+
+		log.writeToLog(this.getClass().toString() + " : " + log.getSuccessMessage() + ".");
 		return jcu;
 	}
 	
@@ -183,6 +195,8 @@ public class DeltaJCreator {
 	 * 			delta to write in file.
 	 */
 	public void addToDeltaString(Delta d, ClassChanges c, String commitComment) {
+
+		log.writeToLog(this.getClass().toString() + " : Appending deltaString...");
 		DeltaActionCreator dac = new DeltaActionCreator();
 		StringBuilder delta = new StringBuilder("");
 
@@ -249,6 +263,8 @@ public class DeltaJCreator {
 		}
 
 		deltaString += delta.toString();
+
+		log.writeToLog(this.getClass().toString() + " : " + log.getSuccessMessage() + ".");
 	}
 
 	/**
@@ -271,6 +287,8 @@ public class DeltaJCreator {
 	 * @param path - path to file, may not contain file.
 	 */
 	public void write(String name, String path) {
+
+		log.writeToLog(this.getClass().toString() + " : Writing delta to delta-file...");
 		try {
 			File f = new File(path + "\\" + name + ".deltaj");
 			// without getParentFile() the path is created with the designated file as directory.
@@ -290,6 +308,8 @@ public class DeltaJCreator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+		log.writeToLog(this.getClass().toString() + " : " + log.getSuccessMessage() + ".");
 	}
 
 }

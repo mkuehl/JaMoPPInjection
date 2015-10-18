@@ -79,6 +79,9 @@ public class JaMoPPInjection {
 					String packageName = "",
 							className = "";
 
+					if (c.getChanges() == null || c.getChanges().equals("")) {
+						continue;
+					}
 					if (!c.getIsWholeClass() || c.getTypeOfChange().equals(ModificationType.CLASSREMOVAL)) {
 						packageName = c.getPackageName();
 						className = c.getClassName();

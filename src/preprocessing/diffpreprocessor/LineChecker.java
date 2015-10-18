@@ -1,5 +1,6 @@
 package preprocessing.diffpreprocessor;
 
+
 /**
  * Class for checking if all lines are added or removed and for extracting new parts of a line,
  * which are not visible to the program since the whole line is marked as removed and added with 

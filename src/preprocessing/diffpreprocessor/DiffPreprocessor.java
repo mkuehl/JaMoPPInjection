@@ -1,6 +1,5 @@
 package preprocessing.diffpreprocessor;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -613,28 +612,6 @@ public class DiffPreprocessor {
 			change.setChanges(change.getChanges().replace("extends ", "").trim());
 		}
 		return change;
-	}
-	
-	/**
-	 * Delets a dir recursively deleting anything inside it.
-	 * @param dir The dir to delete
-	 * @return true if the dir was successfully deleted
-	 */
-	public static boolean deleteDirectory(File dir) {
-	    if(! dir.exists() || !dir.isDirectory())    {
-	        return false;
-	    }
-
-	    String[] files = dir.list();
-	    for(int i = 0, len = files.length; i < len; i++)    {
-	        File f = new File(dir, files[i]);
-	        if(f.isDirectory()) {
-	            deleteDirectory(f);
-	        }else   {
-	            f.delete();
-	        }
-	    }
-	    return dir.delete();
 	}
 	
 	private void showTree(Node root) {	

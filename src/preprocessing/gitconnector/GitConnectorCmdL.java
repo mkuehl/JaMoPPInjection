@@ -1,20 +1,32 @@
 package preprocessing.gitconnector;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.ProcessBuilder.Redirect;
 import java.util.Scanner;
 
-import preprocessing.diffpreprocessor.DiffPreprocessor;
+import logger.Logger;
 
 public class GitConnectorCmdL {
 	
+	private String gitExePath;
 	private StringBuilder diff;
 	private StringBuilder codeBase;
+	private Logger log;
 
-	public GitConnectorCmdL(String usrnam, String pwd) {
+	/**
+	 * The only mandatory parameter is pathToGitExe. It specifies the path where the git.exe
+	 * is located in the system. The path must be specified with the exe itself, e.g. 
+	 * "C:\\Program Files\\Git\\git.exe". This is important because some commands need the 
+	 * file extension explicitly otherwise they don't work.
+	 * 
+	 * @param pathToGitExe
+	 * @param usrnam
+	 * @param pwd
+	 */
+	public GitConnectorCmdL(String pathToGitExe, String usrnam, String pwd) {
+		gitExePath = pathToGitExe;
+		log = new Logger("E:\\loglog.txt", false);
 	}
 
 	/**
@@ -24,19 +36,15 @@ public class GitConnectorCmdL {
 	 */
 	public void getRepo(String pathToDir, String uri) {
 		File localDir = null;
-		//			localPath = File.createTempFile("TestGitRepositoryJGIT", "");
 		localDir = new File(pathToDir);
 
-		DiffPreprocessor.deleteDirectory(localDir);
-//		localDir.delete();
+		deleteDirectory(localDir);
 		localDir.mkdir();
 
 		System.setProperty("user.dir", pathToDir);
-//		System.out.println(System.getProperty("user.dir") + "\t" + pathToDir);
 		Process p = null;
-		String[] cloneCommand = {"E:\\Program Files (x86)\\Git\\bin\\git", "clone", uri, pathToDir};
+		String[] cloneCommand = {gitExePath, "clone", uri, pathToDir};
 		ProcessBuilder builder = new ProcessBuilder(cloneCommand);
-////		builder.directory(new File(/ngs/app/abc));
 		new File("E:\\clonelog.txt").delete();
 		File f = new File("E:\\clonelog.txt");
 		builder.redirectOutput(Redirect.appendTo(f));
@@ -47,10 +55,13 @@ public class GitConnectorCmdL {
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("Failed to create locale git repository");
+			log.writeToLog(this.getClass().toString() + " : Failed to create locale git repository");
+			
 			return;
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			System.out.println("Failed to create locale git repository. Process got stuck.");
+			log.writeToLog(this.getClass().toString() + " : Failed to create locale git repository. Process got stuck.");
 			return;
 		}
 		/*
@@ -61,12 +72,8 @@ public class GitConnectorCmdL {
 		if (p.exitValue() != 0) {
 			p.destroy();
 		}
-//		@SuppressWarnings("resource")
-//		Scanner s = new Scanner(p.getErrorStream());
-//		while(s.hasNext()) {
-//			System.out.println(s.nextLine());
-//		}
 		System.out.println("Successfully created locale git repository");
+		log.writeToLog(this.getClass().toString() + " : Successfully created locale git repository");
 	}
 	
 	/**
@@ -80,9 +87,9 @@ public class GitConnectorCmdL {
 		Process p = null;
 		File repoDirectory = new File(pathToDir);
 		String initialCommitHash = "";
-		String[] revlistCommand = {"E:\\Program Files (x86)\\Git\\bin\\git.exe", "rev-list", "--max-parents=0", "HEAD"};
-		String[] diffCommand = {"E:\\Program Files (x86)\\Git\\bin\\git.exe", "diff", "", optionalClass};
-		String[] logCommandForInitialCommit = {"E:\\Program Files (x86)\\Git\\bin\\git.exe", "log", "-p", "--pretty=email", 
+		String[] revlistCommand = {gitExePath, "rev-list", "--max-parents=0", "HEAD"};
+		String[] diffCommand = {gitExePath, "diff", "", optionalClass};
+		String[] logCommandForInitialCommit = {gitExePath, "log", "-p", "--pretty=email", 
 				"--reverse", "", optionalClass};
 		ProcessBuilder pb = new ProcessBuilder(revlistCommand);
 		try {
@@ -117,11 +124,14 @@ public class GitConnectorCmdL {
 			}
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
-			System.out.println("Failed to extract code base.");
+			System.out.println("Failed to extract baseline code.");
+			log.writeToLog(this.getClass().toString() + " : Failed to extract baseline code.");
 			return;
 		}
 		
-		System.out.println("Successfully extracted code base");
+		System.out.println("Successfully extracted baseline code.");
+
+		log.writeToLog(this.getClass().toString() + " : Successfully extracted baseline code.");
 	}
 	
 	/**
@@ -134,32 +144,18 @@ public class GitConnectorCmdL {
 	 */
 	public void executeDiff(String pathToDir, int startNumberOfCommitFromHEAD, int endNumberOfCommitFromHEAD, 
 			String optionalClass) {
+		System.out.println("LOG: ");
 		Process p = null;
-//		String[] command = {"cmd", "/c", "dir", "/a:-d", pathToDir};
 		String range = "HEAD~" + startNumberOfCommitFromHEAD + "..HEAD~" + endNumberOfCommitFromHEAD;
 		// set git programm location, command, options
-		String[] logCommand = {"E:\\Program Files (x86)\\Git\\bin\\git.exe", "log", "-p", "-U10000", "--pretty=email", "--reverse", range, 
+		String[] logCommand = {gitExePath, "log", "-p", "-U10000", "--pretty=email", "--reverse", range, 
 				optionalClass};
-//		for (String l : logCommand) {
-//			System.out.println(l);
-//		}
+
 		ProcessBuilder pb = new ProcessBuilder(logCommand);
-		// create a log file for the log command
-		new File("E:\\loglog.txt").delete();
-		File f = new File("E:\\loglog.txt");
 		
 		try {
-//			pb.redirectOutput(Redirect.appendTo(f));
-//			p2 = pb.start();
-//			Scanner s2 = new Scanner(p2.getInputStream());
-//			while(s2.hasNext()) {
-//				System.out.println(s2.nextLine());
-//			}
-//			pb = new ProcessBuilder(logCommand);
-//			pb.redirectOutput(Redirect.appendTo(f));
 			// set the path of the local git repo on which the command shall be performed.
 			pb.directory(new File(pathToDir));
-//			System.out.println(pb.directory().getPath());
 			p = pb.start();
 			@SuppressWarnings("resource")
 			Scanner s = new Scanner(p.getInputStream());
@@ -167,22 +163,14 @@ public class GitConnectorCmdL {
 			while(s.hasNextLine()) {
 				diff.append(s.nextLine() + "\n");
 			}
-			try {
-				PrintWriter out = new PrintWriter(f);
-				out.print(diff);
-				out.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
-//			s2 = new Scanner(p.getInputStream());
-//			while(s2.hasNext()) {
-//				System.out.println(s2.nextLine());
-//			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("Failed to get requested commit history");
+			log.writeToLog(this.getClass().toString() + " : Failed to get requested commit history.");
 		}
-		System.out.println("Successfully got requested commit history");
+		System.out.println("Successfully got requested commit history.");
+		log.writeToLog(this.getClass().toString() + " : Successfully got requested commit history.");
+		
 	}
 	
 	public String getDiff() {
@@ -191,5 +179,27 @@ public class GitConnectorCmdL {
 	
 	public String getCodeBase() {
 		return codeBase.toString();
+	}
+	
+	/**
+	 * Delets a dir recursively deleting anything inside it.
+	 * @param dir The dir to delete
+	 * @return true if the dir was successfully deleted
+	 */
+	public boolean deleteDirectory(File dir) {
+	    if(! dir.exists() || !dir.isDirectory())    {
+	        return false;
+	    }
+
+	    String[] files = dir.list();
+	    for(int i = 0, len = files.length; i < len; i++)    {
+	        File f = new File(dir, files[i]);
+	        if(f.isDirectory()) {
+	            deleteDirectory(f);
+	        }else   {
+	            f.delete();
+	        }
+	    }
+	    return dir.delete();
 	}
 }

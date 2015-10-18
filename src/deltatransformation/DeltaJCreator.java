@@ -173,7 +173,8 @@ public class DeltaJCreator {
 	}
 	
 	/**
-	 * Creates a .deltaj-file. 
+	 * The code for the delta is saved internally in this class until a write operation is executed.
+	 * This method converts a delta into string representation.
 	 * @param name
 	 * 			name of the created file.
 	 * @param path
@@ -244,13 +245,16 @@ public class DeltaJCreator {
 					delta.append(dac.createDeltaActionsForManyMembers(memberList, ma, c));
 				}
 				delta.append("}\n");
-			} else {
-			}
+			} 
 		}
 
 		deltaString += delta.toString();
 	}
 
+	/**
+	 * Adds a curly closing bracket to the internal string representation of the delta.
+	 * May be neccessary in some cases.
+	 */
 	public void closeDeltaString() {
 		if (deltaString.length() > 0) {
 			deltaString += "}\n";

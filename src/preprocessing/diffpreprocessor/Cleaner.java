@@ -38,4 +38,36 @@ public class Cleaner {
 		return input;
 	}
 	
+	public static String cleanDiffFromComments(String diff) {
+//		String[] lines = diff.split("\\n");
+//		StringBuilder result = new StringBuilder();
+//		boolean multiLine = false;
+//		for (String line : lines) {
+//			if (line.contains("/*")) {
+//				multiLine = true;
+//				line = "";
+//			}
+//			if (multiLine) {
+//				if (line.contains("*/")) {
+//					multiLine = false;
+//				}
+//				line = "";
+//			}
+//			if (line.contains("//")) {
+//				line = "";
+//			}
+//			result.append(line + "\n");
+//		}
+//		return result.toString();
+		// remove comments
+		while (diff.contains("/*")) {
+			String temp = "",
+				   temp2 = "";
+			temp = diff.substring(0, diff.indexOf("/*")-1);
+			temp2 = diff.substring(diff.indexOf("*/")+2);
+			diff = temp + temp2;
+		}
+		return diff;
+	}
+	
 }

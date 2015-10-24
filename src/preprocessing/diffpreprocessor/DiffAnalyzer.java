@@ -17,14 +17,27 @@ public class DiffAnalyzer {
 		ProjectTreeFactory ptf = new ProjectTreeFactory();
 		Node packageNode = null,
 			 classNode = null;
-		String tempDiff = diff;
+		String tempDiff = Cleaner.cleanDiffFromComments(diff);
 //		String[] lines = diff.split("\\r?\\n");
-		String packageRegex = "package\\s[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*;";
-		String classRegex = "(public|protected|private)?\\sclass\\s[a-zA-Z0-9_]+";
-		String importRegex = "import\\s[a-zA-Z0-9_]+(\\.([a-zA-Z0-9_]+|\\*))+;";
-		String methodRegex = "(public|protected|private)?\\s[a-zA-Z0-9_]+\\s[a-zA-Z0-9_]+\\s?\\(";
+		String packageRegex = "package[\\s]+[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*;";
+		String classRegex = "(\\s)*((public|protected|private)\\s)?(\\s)*class[\\s]+[a-zA-Z0-9_]+";
+		String importRegex = "import[\\s]+[a-zA-Z0-9_]+(\\.([a-zA-Z0-9_]+|\\*))+;";
+		String methodRegex = "(\\s)*((public|protected|private)\\s)?(\\s)*[a-zA-Z0-9_]*[\\s]*[a-zA-Z0-9_]+[\\s]*\\(.*\\)[\\s]*\\{";
 		String parameterRegex = "(\\s)*[a-zA-Z0-9_]+(\\s)*[a-zA-Z0-9_]+(\\s)*(,)?";
-		String fieldRegex = "(?!\\breturn\\b)(public|protected|private)?\\s(?!\\bnull;\\b)([a-zA-Z0-9_]+)\\s[a-zA-Z0-9_]+\\s?(;|=)";
+		String fieldRegex = "(?!\\breturn\\b)(public|protected|private)?[\\s]+(?!\\bnull;\\b)([a-zA-Z0-9_]+)[\\s]+[a-zA-Z0-9_]+[\\s]*(;|=)";
+//		InputStream in = this.getClass().getClassLoader().getResourceAsStream("app.RegExpressions");
+//		final Properties configProp = new Properties();
+//		  try {
+//	          configProp.load(in);
+//	      } catch (IOException e) {
+//	          e.printStackTrace();
+//	      }
+//		String packageRegex = configProp.getProperty("IdentifyPackageRegex");
+//		String classRegex = configProp.getProperty("IdentifyClassRegex");
+//		String importRegex = configProp.getProperty("IdentifyImportStatementRegex");
+//		String methodRegex = configProp.getProperty("IdentifyMethodRegex");
+//		String parameterRegex = configProp.getProperty("IdentifyParameterRegex");
+//		String fieldRegex = configProp.getProperty("IdentifyFieldRegex");
 		
 		Pattern packagePattern = Pattern.compile(packageRegex);
 		Pattern classPattern = Pattern.compile(classRegex);
@@ -62,7 +75,7 @@ public class DiffAnalyzer {
 		if (m.find()) {
 			String t = m.group();
 			int length = tempDiff.split("\\n").length;
-			String name = t.substring(t.indexOf("class ")+6);
+			String name = t.substring(t.indexOf("class ")+6).trim();
 			String modifiers = t.substring(0, t.indexOf("class"));
 			String[] ta = modifiers.split("\\s");
 			HashSet<String> classModifiers = new HashSet<String>();
@@ -112,9 +125,10 @@ public class DiffAnalyzer {
 		
 		m = methodPattern.matcher(tempDiff);
 		while(m.find()) {
-			String t = m.group();
-			if (t.contains("printText")) {
-				System.out.println();
+			String t = m.group().trim();
+			if (t.replace("(", "").trim().equals("if") || t.replace("(", "").trim().equals("else if") ||
+					t.contains("new")) {
+				continue;
 			}
 //			String tt = (tempDiff.substring(0, m.end()));
 //			String[] tta = tt.split("\\n");
@@ -127,13 +141,19 @@ public class DiffAnalyzer {
 			if (beginningLine == -1) {
 				continue;
 			}
-			// methods might have two space characters. If so, extract the name from the second, if not, extract it from the first.
-			String name = t.substring(t.indexOf(" ")+1, t.indexOf("("));
+			String name = null;
+			try {
+				// methods might have two space characters. If so, extract the name from the second, if not, extract it from the first.
+				name = t.substring(t.indexOf(" ")+1, t.indexOf("(")).trim();
+			} catch (StringIndexOutOfBoundsException e) {
+				//not whitespace character
+				name = t.substring(0, t.indexOf("(")).trim();
+			}
 			String returnType = "";
 			String[] ta = t.split("\\s");
 			String parameterString;
-			if (name.contains(" ")) {
-				returnType = name.replaceAll("public|protected|private|abstract|final|volatile|native|strict|synchronized|transient", "");
+			if (t.contains(" ")) {
+				returnType = t.replaceAll("public|protected|private|abstract|final|volatile|native|strict|synchronized|transient", "");
 				name = name.substring(name.indexOf(" ")+1);
 				returnType = returnType.substring(0, returnType.indexOf(name)).trim();
 			} else {
@@ -161,9 +181,12 @@ public class DiffAnalyzer {
 				classNode.addChild(method);
 				method.setParent(classNode);
 				contained = false;
+				if (!t.contains("(") && !t.contains(")")) {
+					continue;
+				}
 				
 				// find params, if existent
-				parameterString = tempDiff.substring(m.end(), tempDiff.indexOf(")", m.start()));
+				parameterString = tempDiff.substring(tempDiff.indexOf("(", m.start()), tempDiff.indexOf(")", m.start())+1);
 				m2 = paramPattern.matcher(parameterString);
 				while (m2.find()) {
 					String parameterName = m2.group();
@@ -197,7 +220,7 @@ public class DiffAnalyzer {
 		while (m.find()) {
 			String t = m.group();
 			// no return statements.
-			if (t.contains("return")) {
+			if (t.contains("return") || t.contains("package")) {
 				continue;
 			}
 			// -1 due to the linebreak of the last line.
@@ -210,7 +233,7 @@ public class DiffAnalyzer {
 			String modifiers;
 			if (t.contains(";")) {
 				name = t.replace(";", "").trim();
-				returnType = name.replaceAll("public|protected|private|abstract|final|volatile|native|strict|synchronized|transient", "");
+				returnType = t.replaceAll("public|protected|private|abstract|final|volatile|native|strict|synchronized|transient", "");
 				name = name.substring(name.lastIndexOf(" ")+1, name.length());
 				returnType = returnType.substring(0, returnType.indexOf(name)).trim();
 				modifiers = t.substring(0, t.indexOf(";"));
@@ -218,6 +241,8 @@ public class DiffAnalyzer {
 			} else {
 				name = t.substring(0, t.indexOf("=")).trim();
 				name = name.substring(name.lastIndexOf(" ")+1, name.length());
+				returnType = t.replaceAll("public|protected|private|abstract|final|volatile|native|strict|synchronized|transient", "");
+				returnType = returnType.substring(0, returnType.indexOf(name)).trim();
 				modifiers = t.substring(0, t.indexOf("="));
 //				modifiers = modifiers.substring(0, modifiers.lastIndexOf(" "));
 			}
@@ -305,7 +330,7 @@ public class DiffAnalyzer {
 	}
 	
 	private int getBeginningLineOfMember(String diff, String memberCode) {
-		String[] lines = diff.split("\\r?\\n");
+		String[] lines = diff.split("\\n");
 		for (int i = 0; i < lines.length; i++) {
 			if (lines[i].contains(memberCode) && lines[i].startsWith("-")) {
 				return -1;

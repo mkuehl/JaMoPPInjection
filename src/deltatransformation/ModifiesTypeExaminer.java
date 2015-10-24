@@ -66,6 +66,10 @@ public class ModifiesTypeExaminer {
 		return eom;
 	}
 	
+	public ModificationType examineModifiesType(byte addRem, String modifiedCodeLine, boolean methodModification) {
+		return ModificationType.MODIFIESMETHOD;
+	}
+	
 	/**
 	 * Computes key word for delta action based on addRem flag and modifiedCodeLine.
 	 * addRem indicates whether it is an addition, a modification or removal while 

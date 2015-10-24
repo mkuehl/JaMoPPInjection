@@ -33,12 +33,19 @@ public class MethodSignatureModificationAnalyzer {
 	 */
 	public boolean isMethod(String line) {
 
-		String methodRegex = "^(\\s)*(public|protected|private)?\\s[a-zA-Z0-9_]+\\s[a-zA-Z0-9_]+\\s?(\\(|=|;)";
+		String methodRegex = "(\\s)*((public|protected|private)?[\\s]+)?"
+				+ "((final[\\s]+|static[\\s]+|((final[\\s]+static[\\s]+))|((static[\\s]+final[\\s]+)))?)"
+				+ "[a-zA-Z0-9_]+[\\s]+[a-zA-Z0-9_]+[\\s]*(\\()";
 		Pattern methodPattern = Pattern.compile(methodRegex);
 		Matcher m;
 		m = methodPattern.matcher(line);
 		if (m.find()) {
-			return true;
+			// method signatures may not contain the equals-sign or new keyword.
+//			String s = m.group();
+			if (!m.group().contains("=") && !m.group().contains("new")) {
+				return true;
+			}
+			return false;
 		}
 		return false;
 	}

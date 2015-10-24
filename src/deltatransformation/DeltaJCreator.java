@@ -218,9 +218,12 @@ public class DeltaJCreator {
 		LinkedList<String> memberList = null;
 		if (c.getChanges() != null) {
 			memberList = ms.separateMembers(c.getChanges(), c.getTypeOfChange());
+		} else if (d.getDeltaActions().get(0) instanceof AddsUnit) {
+		} else {
+			return;
 		}
 		EList<DeltaAction> deltaActions = d.getDeltaActions();
-		for (int i = 0; i < d.getDeltaActions().size(); i++) {
+		for (int i = d.getDeltaActions().size()-1; i < d.getDeltaActions().size(); i++) {
 			/*
 			 *  Has to be done to use the right delta actions for their designated members. 
 			 *  If memberList is null (e.g. AddsUnit) 1 has to be subtracted from the size, because 
@@ -257,12 +260,16 @@ public class DeltaJCreator {
 					// List of separated members is given to the delta action creator method
 
 					delta.append(dac.createDeltaActionsForManyMembers(memberList, ma, c));
+					break;
 				}
 				delta.append("}\n");
 			} 
 		}
 
-		deltaString += delta.toString();
+		String testForEmpty = delta.toString().trim().replaceAll("(adds|removes|modifies|\\s)", "");
+		if (testForEmpty.length() > 0) {
+			deltaString += delta.toString();
+		}
 
 		log.writeToLog(this.getClass().toString() + " : " + log.getSuccessMessage() + ".");
 	}

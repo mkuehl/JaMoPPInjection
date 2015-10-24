@@ -20,11 +20,11 @@ public class JaMoPPInjection {
 		String code = "";	
 		int i = 0;
 		// TODO adjust headRevision, and paths to your flavor and system.
-		int headRevision = 19;
+		int headRevision = 7;
 		// Path to git.exe must end with the git.exe itself!
 		String gitExePath = "E:\\Program Files (x86)\\Git\\bin\\git.exe",
 			   targetDirectory = "E:\\programmaticallyCreatedGitRepo\\",
-			   repoUri = "https://github.com/mkuehl/TestRepo.git",
+			   repoUri = "https://github.com/mkuehl/BankAccountV1.git",
 			   deltaDirectory = "E:\\DeltaJ-workspace\\PrintClassDelta";
 
 		// Connector to git to clone, extract code base and diffs.
@@ -91,8 +91,10 @@ public class JaMoPPInjection {
 					if (k == changes.size()-2) {
 
 					}
-					djc.addToDeltaString(tempDelta, c, "Hash: " + changes.getCommitHash() 
-							+ "\nCommitMessage:" + changes.getCommitMessage());
+					if (c.getChanges() != null) {
+						djc.addToDeltaString(tempDelta, c, "Hash: " + changes.getCommitHash() 
+								+ "\nCommitMessage:" + changes.getCommitMessage());
+					}
 
 					// interfaces and superclasses have already a semicolon, if the deltastring has one as well, don't close it!
 					if (c.getTypeOfChange().equals(ModificationType.CLASSADDITION)) {

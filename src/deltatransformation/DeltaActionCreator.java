@@ -1,6 +1,8 @@
 package deltatransformation;
 
 import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.deltaj.deltaJ.AddsClassBodyMemberDeclaration;
 import org.deltaj.deltaJ.AddsEnumConstant;
@@ -17,6 +19,7 @@ import org.deltaj.deltaJ.RemovesMethod;
 import org.deltaj.deltaJ.RemovesSuperclass;
 import org.eclipse.emf.ecore.EObject;
 
+import preprocessing.diffpreprocessor.LineChecker;
 import preprocessing.diffpreprocessor.ModificationType;
 import preprocessing.diffs.ClassChanges;
 import projecttree.Node;
@@ -35,6 +38,7 @@ public class DeltaActionCreator {
 	public String createDeltaActionsForManyMembers(LinkedList<String> members, EObject ma, 
 			ClassChanges c) {
 		StringBuilder affectedMembers = new StringBuilder();
+		LineChecker lc = new LineChecker();
 		int openingBrackets = 0,
 			closingBrackets = 0;
 
@@ -45,27 +49,57 @@ public class DeltaActionCreator {
 				// if superclass is not removed, further instructions are needed.
 				if (!affectedMembers.toString().contains("removes superclass")) {
 					String t = s.replaceAll("(public|protected|private|static|final)", "");
+					String memberName = "";
+					int startindex = 0;
+					String memberRegex = "[a-zA-Z0-9_]+[\\s]+[a-zA-Z0-9_]+[\\s]*(\\(|=|;)";
+					Pattern memberPattern = Pattern.compile(memberRegex);
+					Matcher memberMatcher = memberPattern.matcher(t);
+					
 					//					// return type (can be qualified), method name
 					//					String regex = "(\\w|\\d|_)+\\.?(\\w|\\d|_|\\.){0,50}(\\w|\\d|_)+[\\s]+(\\w|_|.){1,50}(\\w|_)[\\s]+"
 					//							// a (, arbitrary number of parameters and last a )
 					//							+ "\\(((\\w|_|.){1,50}(\\w|_),)*(\\w|_|.){1,50}(\\w|_)\\)";
-					String[] methodParts = t.split("\\s|,");
+					t = t.trim();
+					String[] memberParts = t.split("\\s|,");
 
-					affectedMembers.append(" " + methodParts[3]);
+//					affectedMembers.append(" " + memberParts[3]);
+					if (memberMatcher.find()) {
+						memberName = memberMatcher.group();
+						// if not a method.
+						if (!memberName.endsWith("(")) {
+							memberName = memberName.trim().substring(memberName.trim().indexOf(" "), memberName.length()-1).trim();
+						} else {
+							memberName = memberName.trim().substring(memberName.trim().indexOf(" ")).trim();
+						}
+						affectedMembers.append(" " + memberName);
+						if (memberName.trim().endsWith("(")) {
+							memberName = memberName.replace("(", "").trim();
+						}
+						for (int j = 0; j < memberParts.length; j++) {
+							if (memberParts[j].contains(memberName)) {
+								startindex = j;
+								break;
+							}
+						}
+					} else {
+						// no signature found.
+						break;
+					}
 					// iterates through parameters, adding only datatypes and stopping by hitting "{"
-					for (int i = 4; i < methodParts.length; i++) {
-						if (methodParts[i].contains("{")) {
+					for (int i = startindex; i < memberParts.length; i++) {
+						// if opening curly brackets or equals are found, the name is already extracted.
+						if (memberParts[i].contains("{") || memberParts[i].contains("=")) {
 							break;
 						}
-						if (methodParts[i].contains(",") || methodParts[i].endsWith(")") || 
-								methodParts[i].equals("")) {
+						if (memberParts[i].contains(",") || memberParts[i].endsWith(")") || 
+								memberParts[i].equals("") || memberParts[i].contains(memberName)) {
 							continue;
 						} 
-						affectedMembers.append(methodParts[i] + " ");
+						affectedMembers.append(memberParts[i] + " ");
 					}
 					if (!affectedMembers.toString().endsWith(";")) {
-						openingBrackets += countNumberOfOccurencesInString(affectedMembers.toString(), "(");
-						closingBrackets += countNumberOfOccurencesInString(affectedMembers.toString(), ")");
+						openingBrackets += lc.countNumberOfOccurencesInString(affectedMembers.toString(), "(");
+						closingBrackets += lc.countNumberOfOccurencesInString(affectedMembers.toString(), ")");
 						while (closingBrackets < openingBrackets) {
 							affectedMembers.append(")");
 							closingBrackets++;
@@ -98,9 +132,12 @@ public class DeltaActionCreator {
 					affectedMembers.append(paramsWithType + ") {\n" + 
 							(!c.getIsMethodModifiedAtStart() ? ("original(" + params +
 									");\n") : ""));
-					affectedMembers.append(s.trim() + (s.trim().endsWith(";") ? "" : ";") + "\n");
+//					affectedMembers.append(s.trim() + (s.trim().endsWith(";") ? "" : ";") + "\n");
+					affectedMembers.append(c.getChanges().trim() + 
+							(c.getChanges().trim().endsWith(";") ? "" : ";") + "\n");
 					affectedMembers.append(c.getIsMethodModifiedAtStart() ? "original(" + 
 							params + ");\n" : "");
+					return affectedMembers.toString();
 				} else {
 					affectedMembers.append(" " + s.trim() + "");
 				}
@@ -115,8 +152,8 @@ public class DeltaActionCreator {
 						affectedMembers.append(";");
 					}
 				}
-				openingBrackets += countNumberOfOccurencesInString(affectedMembers.toString(), "{");
-				closingBrackets += countNumberOfOccurencesInString(affectedMembers.toString(), "}");
+				openingBrackets += lc.countNumberOfOccurencesInString(affectedMembers.toString(), "{");
+				closingBrackets += lc.countNumberOfOccurencesInString(affectedMembers.toString(), "}");
 				while (closingBrackets < openingBrackets) {
 					affectedMembers.append("}");
 					closingBrackets++;
@@ -152,20 +189,5 @@ public class DeltaActionCreator {
 			return "modifies";
 		}
 
-	}
-	
-	private int countNumberOfOccurencesInString(String line, String searchingFor) {
-		String tempLine = line;
-		int indexOfLastOccurence = 0,
-			occurenceCount = 0;
-		while (indexOfLastOccurence != -1) {
-			indexOfLastOccurence = tempLine.indexOf(searchingFor);
-			if (indexOfLastOccurence == -1) {
-				break;
-			}
-			tempLine = tempLine.substring(indexOfLastOccurence+searchingFor.length());
-			occurenceCount++;
-		}
-		return occurenceCount;
 	}
 }

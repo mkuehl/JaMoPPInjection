@@ -17,19 +17,19 @@ public class MemberSeparator {
 				isMethodMember = false;
 
 		// matches packages.
-		String packageRegex = "package\\s[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*;";
+		String packageRegex = "package[\\s]{1,5}[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*;";
 		Pattern packagePattern = Pattern.compile(packageRegex);
 		Matcher packageMatcher;
 		// matches imports, like packages but must consider qualified names and the possible asterix.
-		String importRegex = "import\\s[a-zA-Z0-9_]+(\\.([a-zA-Z0-9_]+|\\*))+;";
+		String importRegex = "import[\\s]{1,5}[a-zA-Z0-9_]+(\\.([a-zA-Z0-9_]+|\\*))+;";
 		Pattern importPattern = Pattern.compile(importRegex);
 		Matcher importMatcher;
 		// matches methods, optional modifier, return type, name, starting bracket for param list.
-		String memberRegex = "^(\\s)*(public|protected|private)?\\s[a-zA-Z0-9_]+\\s[a-zA-Z0-9_]+\\s?(\\(|=|;)";
+		String memberRegex = "(\\s)*((public|protected|private)?[\\s]{1,5})?((final[\\s]{1,5}|static[\\s]{1,5}){0,2})[a-zA-Z0-9_]+[\\s]{1,5}[a-zA-Z0-9_]+[\\s]{0,5}(\\(|=|;)";
 		Pattern memberPattern = Pattern.compile(memberRegex);
 		Matcher memberMatcher;
 		
-		String qualifiedMethodCallsRegex = "^(\\s)*[a-zA-Z0-9_\\.]*[a-zA-Z0-9_]+\\s?(\\(|=)";
+		String qualifiedMethodCallsRegex = "(\\s)*[a-zA-Z0-9_\\.]*[a-zA-Z0-9_]+[\\s]{0,5}(\\(|=)";
 		Pattern qualifiedMethodCallsPattern = Pattern.compile(qualifiedMethodCallsRegex);
 		Matcher qualifiedMethodCallsMatcher;
 		// to ensure, that the member is completed, count opening and closing curly brackets.
@@ -47,6 +47,16 @@ public class MemberSeparator {
 			return separatedMembers;
 		}
 		
+		// remove comments
+		while (allMembers.contains("/*")) {
+			String temp = "",
+				   temp2 = "";
+//			allMembers = allMembers.replaceAll("/\\*[\\.]*/\\*", "");
+			temp = allMembers.substring(0, allMembers.indexOf("/*")-1);
+			temp2 = allMembers.substring(allMembers.indexOf("*/")+2);
+			allMembers = temp + temp2;
+		}
+		allMembers = allMembers.trim();
 		// split given String by line endings.
 		String[] lines = allMembers.split("\\r?\\n");
 		for (String line : lines) {

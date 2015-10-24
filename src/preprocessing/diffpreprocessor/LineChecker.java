@@ -146,4 +146,20 @@ public class LineChecker {
 		}
 		return false;
 	}
+	
+	
+	public int countNumberOfOccurencesInString(String line, String searchingFor) {
+		String tempLine = line;
+		int indexOfLastOccurence = 0,
+			occurenceCount = 0;
+		while (indexOfLastOccurence != -1) {
+			indexOfLastOccurence = tempLine.indexOf(searchingFor);
+			if (indexOfLastOccurence == -1) {
+				break;
+			}
+			tempLine = tempLine.substring(indexOfLastOccurence+searchingFor.length());
+			occurenceCount++;
+		}
+		return occurenceCount;
+	}
 }

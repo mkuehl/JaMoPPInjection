@@ -17,14 +17,15 @@ public class DiffAnalyzer {
 		ProjectTreeFactory ptf = new ProjectTreeFactory();
 		Node packageNode = null,
 			 classNode = null;
-		String tempDiff = Cleaner.cleanDiffFromComments(diff);
+		Cleaner c = new Cleaner();
+		String tempDiff = c.cleanDiffFromComments(diff);
 //		String[] lines = diff.split("\\r?\\n");
 		String packageRegex = "package[\\s]+[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*;";
-		String classRegex = "(\\s)*((public|protected|private)\\s)?(\\s)*class[\\s]+[a-zA-Z0-9_]+";
+		String classRegex = "(\\s)*((public|protected|private)\\s)?(\\s)*(abstract\\s)?(class|interface)[\\s]+[a-zA-Z0-9_]+";
 		String importRegex = "import[\\s]+[a-zA-Z0-9_]+(\\.([a-zA-Z0-9_]+|\\*))+;";
 		String methodRegex = "(\\s)*((public|protected|private)\\s)?(\\s)*[a-zA-Z0-9_]*[\\s]*[a-zA-Z0-9_]+[\\s]*\\(.*\\)[\\s]*\\{";
-		String parameterRegex = "(\\s)*[a-zA-Z0-9_]+(\\s)*[a-zA-Z0-9_]+(\\s)*(,)?";
-		String fieldRegex = "(?!\\breturn\\b)(public|protected|private)?[\\s]+(?!\\bnull;\\b)([a-zA-Z0-9_]+)[\\s]+[a-zA-Z0-9_]+[\\s]*(;|=)";
+		String parameterRegex = "(\\s)*(final)?(\\s)*[a-zA-Z0-9_]+(\\s)*[\\[\\]]*(\\s)+[a-zA-Z0-9_]+(\\s)*[\\[\\]]*(\\s)*(,)?";
+		String fieldRegex = "(?!\\breturn\\b)(public|protected|private)?[\\s]+(?!\\bnull;\\b)([a-zA-Z0-9_]+)[\\s]*[\\[\\]]*(\\s)+[a-zA-Z0-9_]+[\\s]*[\\[\\]]*(\\s)*(;|=)";
 //		InputStream in = this.getClass().getClassLoader().getResourceAsStream("app.RegExpressions");
 //		final Properties configProp = new Properties();
 //		  try {
@@ -75,8 +76,15 @@ public class DiffAnalyzer {
 		if (m.find()) {
 			String t = m.group();
 			int length = tempDiff.split("\\n").length;
-			String name = t.substring(t.indexOf("class ")+6).trim();
-			String modifiers = t.substring(0, t.indexOf("class"));
+			String name;
+			String modifiers = null;
+			if (t.contains("interface")) {
+				name = t.substring(t.indexOf("interface ")+10).trim();
+				modifiers = t.substring(0, t.indexOf("interface")).trim();
+			} else {
+				name = t.substring(t.indexOf("class ")+6).trim();
+				modifiers = t.substring(0, t.indexOf("class")).trim();
+			}
 			String[] ta = modifiers.split("\\s");
 			HashSet<String> classModifiers = new HashSet<String>();
 			HashSet<Node> hsn = packageNode.getAllChildren();
@@ -189,15 +197,24 @@ public class DiffAnalyzer {
 				parameterString = tempDiff.substring(tempDiff.indexOf("(", m.start()), tempDiff.indexOf(")", m.start())+1);
 				m2 = paramPattern.matcher(parameterString);
 				while (m2.find()) {
-					String parameterName = m2.group();
+					if (parameterString.contains(";")) {
+						break;
+					}
+					String parameterName = m2.group().trim();
 					String javaType = "";
+					boolean isFinal = false;
 					HashSet<Node> hsp = method.getAllChildrenOfType(NodeType.PARAMETER);
-					javaType = parameterName.substring(0, parameterName.lastIndexOf(" "));
-					parameterName = parameterName.substring(parameterName.indexOf(" ")+1);
+					javaType = parameterName.substring(0, parameterName.lastIndexOf(" ")).trim();
+					isFinal = (javaType.contains("final") ? true : false);
+					parameterName = parameterName.substring(parameterName.lastIndexOf(" ")+1).trim();
 					if (parameterName.endsWith(",")) {
 						parameterName = parameterName.replace(",", "");
 					}
 					Node paramNode = ptf.createParameter(parameterName);
+					if (isFinal) {
+						javaType = javaType.replace("final", "").trim();
+						paramNode.addModifier("final");
+					}
 					paramNode.setJavaType(javaType);
 					for (Node p : hsp) {
 						if (p.getName().equals(paramNode.getName())) {
@@ -292,12 +309,15 @@ public class DiffAnalyzer {
 	}
 	
 	private int getLengthOfMember(String memberCode) {
-		int openedCurlyBrackets = 0,
+		int openedCurlyBrackets = 1,
 			closedCurlyBrackets = 0,
 			lineCount = 0;
 
 		String[] lines = memberCode.split("\\r?\\n");
 		for (String line : lines) {
+			if (line.equals("")) {
+				continue;
+			}
 			if (!line.startsWith("-")) {
 				lineCount++;
 			}
@@ -332,9 +352,9 @@ public class DiffAnalyzer {
 	private int getBeginningLineOfMember(String diff, String memberCode) {
 		String[] lines = diff.split("\\n");
 		for (int i = 0; i < lines.length; i++) {
-			if (lines[i].contains(memberCode) && lines[i].startsWith("-")) {
-				return -1;
-			}
+//			if (lines[i].contains(memberCode) && lines[i].startsWith("-")) {
+//				return -1;
+//			}
 			if (lines[i].contains(memberCode)) {
 				return i + (lines[0].equals("") ? 0 : 1);
 			}

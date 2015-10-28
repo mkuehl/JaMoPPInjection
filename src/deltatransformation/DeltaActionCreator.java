@@ -59,9 +59,10 @@ public class DeltaActionCreator {
 					//					String regex = "(\\w|\\d|_)+\\.?(\\w|\\d|_|\\.){0,50}(\\w|\\d|_)+[\\s]+(\\w|_|.){1,50}(\\w|_)[\\s]+"
 					//							// a (, arbitrary number of parameters and last a )
 					//							+ "\\(((\\w|_|.){1,50}(\\w|_),)*(\\w|_|.){1,50}(\\w|_)\\)";
-					t = t.trim();
-					String[] memberParts = t.split("\\s|,");
 
+
+					t = t.trim();
+					String[] memberParts = t.split("\\(|\\)|,");
 //					affectedMembers.append(" " + memberParts[3]);
 					if (memberMatcher.find()) {
 						memberName = memberMatcher.group();
@@ -85,6 +86,7 @@ public class DeltaActionCreator {
 						// no signature found.
 						break;
 					}
+					
 					// iterates through parameters, adding only datatypes and stopping by hitting "{"
 					for (int i = startindex; i < memberParts.length; i++) {
 						// if opening curly brackets or equals are found, the name is already extracted.
@@ -115,29 +117,33 @@ public class DeltaActionCreator {
 				}
 			} else {
 				if (c.getTypeOfChange().equals(ModificationType.MODIFIESMETHOD)) {
-					affectedMembers.append(" " + c.getModifiedMethod().getName() + "(");
-					String params = "",
-						   paramsWithType = "";
-					// params have to be named, with type for declaration, only name for calls.
-					for (Node p : c.getModifiedMethod().getAllChildrenOfType(NodeType.PARAMETER)) {
-						params += p.getName() + ",";
-						paramsWithType += p.getJavaType() + " " + p.getName() + ",";
+					try {
+						affectedMembers.append(" " + c.getModifiedMethod().getName() + "(");
+						String params = "",
+								paramsWithType = "";
+						// params have to be named, with type for declaration, only name for calls.
+						for (Node p : c.getModifiedMethod().getAllChildrenOfType(NodeType.PARAMETER)) {
+							params += p.getName() + ",";
+							paramsWithType += p.getJavaType() + " " + p.getName() + ",";
+						}
+						if (params.endsWith(",")) {
+							params = params.substring(0, params.length()-1);
+						}
+						if (paramsWithType.endsWith(",")) {
+							paramsWithType = paramsWithType.substring(0, paramsWithType.length()-1);
+						}
+						affectedMembers.append(paramsWithType + ") {\n" + 
+								(!c.getIsMethodModifiedAtStart() ? ("original(" + params +
+										");\n") : ""));
+						//					affectedMembers.append(s.trim() + (s.trim().endsWith(";") ? "" : ";") + "\n");
+						affectedMembers.append(c.getChanges().trim() + 
+								(c.getChanges().trim().endsWith(";") ? "" : ";") + "\n");
+						affectedMembers.append(c.getIsMethodModifiedAtStart() ? "original(" + 
+								params + ");\n" : "");
+						return affectedMembers.toString();
+					} catch (Exception e) {
+						return "";
 					}
-					if (params.endsWith(",")) {
-						params = params.substring(0, params.length()-1);
-					}
-					if (paramsWithType.endsWith(",")) {
-						paramsWithType = paramsWithType.substring(0, paramsWithType.length()-1);
-					}
-					affectedMembers.append(paramsWithType + ") {\n" + 
-							(!c.getIsMethodModifiedAtStart() ? ("original(" + params +
-									");\n") : ""));
-//					affectedMembers.append(s.trim() + (s.trim().endsWith(";") ? "" : ";") + "\n");
-					affectedMembers.append(c.getChanges().trim() + 
-							(c.getChanges().trim().endsWith(";") ? "" : ";") + "\n");
-					affectedMembers.append(c.getIsMethodModifiedAtStart() ? "original(" + 
-							params + ");\n" : "");
-					return affectedMembers.toString();
 				} else {
 					affectedMembers.append(" " + s.trim() + "");
 				}

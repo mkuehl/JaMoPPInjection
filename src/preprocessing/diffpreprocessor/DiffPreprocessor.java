@@ -58,7 +58,8 @@ public class DiffPreprocessor {
 	}
 	
 	public void preprocessCodeBase() {
-		input = Cleaner.cleanInput(input);
+		Cleaner cleaner = new Cleaner();
+		input = cleaner.cleanInput(input);
 		Commit changes = null;
 		ClassChanges change = null;
 		String lineInfoRegex = "\\-[\\d]{1,4},[\\d]{1,2}\\s\\+[\\d]{1,4},[\\d]{1,2}";
@@ -116,7 +117,7 @@ public class DiffPreprocessor {
 		byte addRem = -128;
 		boolean firstLine = true;
 		ModificationType modificationType = null;
-		String qualifiedClassName = null;
+		String qualifiedClassName = extractQualifiedClassName(diffCode);
 		StringBuilder modifications = new StringBuilder();
 		Commit changes = null;
 		String[] lines = diffCode.split("\\r?\\n");
@@ -124,11 +125,6 @@ public class DiffPreprocessor {
 			if (firstLine && line.equals("")) {
 				firstLine = false;
 				continue;
-			}
-			if (line.contains("package")) {
-				qualifiedClassName = line.substring(line.lastIndexOf("package") + 8, line.indexOf(";"));
-			} else if (line.contains("class")) {
-				qualifiedClassName += "." + line.substring(line.lastIndexOf("class")+6, line.indexOf(" {"));
 			}
 			// addition, addRem for the case, that there exist added and removed lines and thus not the whole class is affected.
 			if (line.startsWith("+")) {
@@ -174,7 +170,8 @@ public class DiffPreprocessor {
 	 * as class files are affected.
 	 */
 	public void separateChanges() {
-		input = Cleaner.cleanInput(input);
+		Cleaner cleaner = new Cleaner();
+		input = cleaner.cleanInput(input);
 		// absolute beginning line for code block
 		// MOMENTARILY NOT WORKING CORRECTLY
 		int actualLine = -1,
@@ -206,7 +203,7 @@ public class DiffPreprocessor {
 		Pattern pCommitExtract = Pattern.compile(regexCommitExtract);
 		Matcher mCommitExtract;
 		// matches line information for shown changes within actual code block
-		String lineInfoRegex = "\\-[\\d]{1,4},[\\d]{1,2}\\s\\+[\\d]{1,4},[\\d]{1,2}";
+		String lineInfoRegex = "\\-[\\d]+,[\\d]+\\s\\+[\\d]+,[\\d]+";
 		Pattern lineInfoPattern = Pattern.compile(lineInfoRegex);
 		Matcher lineInfoMatcher;
 		String[] sa = input.split("((From)|(@@)|(Subject: ))");
@@ -280,14 +277,15 @@ public class DiffPreprocessor {
 					changesList.add(commit);
 					continue;
 				}
-				// remove comments
-				while (commitPart.contains("/*")) {
-					String temp = "",
-						   temp2 = "";
-					temp = commitPart.substring(0, commitPart.indexOf("/*")-1);
-					temp2 = commitPart.substring(commitPart.indexOf("*/")+2);
-					commitPart = temp + temp2;
-				}
+//				// remove comments
+//				while (commitPart.contains("/*")) {
+//					String temp = "",
+//						   temp2 = "";
+//					temp = commitPart.substring(0, commitPart.indexOf("/*")-1);
+//					temp2 = commitPart.substring(commitPart.indexOf("*/")+2);
+//					commitPart = temp + temp2;
+//				}
+				commitPart = cleaner.cleanDiffFromComments(commitPart);
 				lines = commitPart.split("\\r?\\n");
 				alreadyProcessed = false;
 				lineBeforeWasAdded = 'u';
@@ -295,7 +293,6 @@ public class DiffPreprocessor {
 				for (int lineNumber = 0; lineNumber < lines.length; lineNumber++) {
 					
 					if (subMethodModifications) {
-						
 						openingBracketCount += lc.countNumberOfOccurencesInString(lines[lineNumber], "{");
 						closingBracketCount += lc.countNumberOfOccurencesInString(lines[lineNumber], "}");
 						if (openingBracketCount == closingBracketCount) {
@@ -315,6 +312,12 @@ public class DiffPreprocessor {
 						if (msma.isMethod(lines[lineNumber])) {
 							subMethodModifications = true;
 							openingBracketCount += lc.countNumberOfOccurencesInString(lines[lineNumber], "{"); 
+							closingBracketCount += lc.countNumberOfOccurencesInString(lines[lineNumber], "}");
+							if (openingBracketCount == closingBracketCount) {
+								subMethodModifications = false;
+								openingBracketCount = 0;
+								closingBracketCount = 0;
+							}
 						}
 						/*
 						 *  if there have been changes before, add, if new mods are of different kind,
@@ -366,6 +369,7 @@ public class DiffPreprocessor {
 							if (msma.isMethodNameModification(lines[lineNumber], lineBefore)) {
 								msma.addIgnoredMethod(lines[lineNumber]);
 								modifications = new StringBuilder();//.delete(0, modifications.length());
+								lineBefore = lines[lineNumber];
 								continue;
 							}
 							/*
@@ -487,11 +491,20 @@ public class DiffPreprocessor {
 						} else {
 						
 							if (subMethodModifications && !alreadyProcessed) {
+								String methodSignature = modifications.toString();
 								// save lineNumber of first change.
 								int startingLineNumber = lineNumber;
 								for (int j = lineNumber; j < lines.length; j++) {
 									if (lines[j].startsWith("+") && !lines[j].startsWith("\"", 1)) {
 										modifications.append(lines[j].substring(1).trim() + (lines[j].endsWith("\n") ? "" : "\n"));
+									} else if (!lines[j].startsWith("+")) {
+										classChange = createChange((byte)1, startingLineNumber+1, qualifiedClassName, false, true, modifications.toString());
+										classChange = addToCommit(commit, classChange);
+										modifications = new StringBuilder(methodSignature);
+										lineNumber = j;
+										startingLineNumber = j+1;
+										// count of opening and closing brackets is not reset because the method might have also changes in the end.
+//										break;
 									}
 									openingBracketCount += lc.countNumberOfOccurencesInString(lines[j], "{");
 									closingBracketCount += lc.countNumberOfOccurencesInString(lines[j], "}");
@@ -504,6 +517,7 @@ public class DiffPreprocessor {
 													modifications.toString().length(), "");
 										}
 										lineNumber = j;
+										lineBefore = lines[lineNumber];
 										break;
 									}
 								}
@@ -514,6 +528,7 @@ public class DiffPreprocessor {
 								subMethodModifications = false;
 								openingBracketCount = 0;
 								closingBracketCount = 0;
+								lineBefore = lines[lineNumber];
 								continue;
 							}
 						}
@@ -598,6 +613,7 @@ public class DiffPreprocessor {
 										modifications = new StringBuilder();//.delete(0, modifications.length());
 										classChange = new ClassChanges();
 										lineNumber = j;
+										lineBefore = lines[j-1];
 										break;
 									}
 								} else if (lines[j].contains("}")) {
@@ -615,6 +631,8 @@ public class DiffPreprocessor {
 									break;
 								}
 							}
+
+							lineBefore = lines[lineNumber];
 							continue;
 						}
 					} else {
@@ -706,8 +724,8 @@ public class DiffPreprocessor {
 	
 	private String extractQualifiedClassName(String classCode) {
 		String qualifiedClassName = "";
-		String packageRegex = "(package\\s([a-zA-Z0-9_]+[\\.]?)+;)";
-		String classRegex = "((public|protected|private)?[\\s]{0,5}class[\\s]{1,5}[a-zA-Z0-9_]+)";
+		String packageRegex = "(package(\\s)+([a-zA-Z0-9_]+[\\.]?)+;)";
+		String classRegex = "(\\s)*((public|protected|private)\\s)?(\\s)*(class|interface)[\\s]+[a-zA-Z0-9_]+";
 		Pattern pattern = Pattern.compile(packageRegex);
 		Matcher matcher = pattern.matcher(classCode);
 		while (matcher.find()) {
@@ -718,7 +736,7 @@ public class DiffPreprocessor {
 		matcher = pattern.matcher(classCode);
 		// not in loop because in case of modifications to class line (mod interfaces, superclass)
 		matcher.find();
-		qualifiedClassName += "." + matcher.group().replaceFirst("(public|protected|private)?[\\s]{0,5}class[\\s]{1,5}", "");
+		qualifiedClassName += "." + matcher.group().replaceFirst("(\\s)*((public|protected|private)\\s)?(\\s)*(class|interface)[\\s]+", "").trim();
 
 		return qualifiedClassName;
 	}
@@ -736,6 +754,9 @@ public class DiffPreprocessor {
 	private ClassChanges createChange(byte addRem, int beginningLine, String qualifiedClassName, boolean isWholeClass,
 			 boolean isMethodModification, String modifications) {
 
+		if (modifications.equals("")) {
+			return null;
+		}
 		ModifiesTypeExaminer mte = new ModifiesTypeExaminer();
 		ProjectTreeSearcher pts = new ProjectTreeSearcher();
 		ClassChanges change = new ClassChanges();
@@ -755,7 +776,6 @@ public class DiffPreprocessor {
 			} else {
 				change.setTypeOfChange(mte.examineModifiesType(addRem, modifications.toString()));
 			}
-			
 			if (change.getTypeOfChange().equals(ModificationType.ADDSMETHOD) && msma.isMethod(modifications) && 
 					!(modifications.split("\\n").length > 2)) {
 				if (!ignoredMethods.contains(qualifiedClassName + "." + modifications.trim())) {

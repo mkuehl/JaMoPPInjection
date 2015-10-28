@@ -80,7 +80,7 @@ public class ProjectTreeSearcher {
 								endline = method.getBeginningLine()+method.getLength()-1;
 							//TODO beginning line in project tree not set correctly
 							// following standard formatting, the new lines begin either at the line following the signature or at the line preceding the last "}".
-							if (endline == beginningLine || startline == beginningLine) {
+							if (endline == beginningLine || endline+1 == beginningLine || startline == beginningLine) {
 //								method.setLength(method.getLength()+length);
 								return method;
 							} else if (numberOfCheckedMethods == methods.size()) {

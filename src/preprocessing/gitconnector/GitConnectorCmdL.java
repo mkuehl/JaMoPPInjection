@@ -26,7 +26,7 @@ public class GitConnectorCmdL {
 	 */
 	public GitConnectorCmdL(String pathToGitExe, String usrnam, String pwd) {
 		gitExePath = pathToGitExe;
-		log = new Logger("E:\\loglog.txt", true);
+		log = new Logger("E:\\loglog.txt", false);
 	}
 
 	/**
@@ -112,8 +112,16 @@ public class GitConnectorCmdL {
 				codeBase.append(s.nextLine() + "\n");
 			}
 			if (codeBase.toString().equals("")) {
+				revlistCommand[2] = "--max-parents=1";
+
+				pb = new ProcessBuilder(revlistCommand);
+				pb.directory(repoDirectory);
+				p = pb.start();
+				s = new Scanner(p.getInputStream());
+				latestCommitHash = s.next();
+				initialCommitHash = s.next();
 				// Set second position to initialCommitHash only to get initial commit.
-				logCommandForInitialCommit[4] = initialCommitHash;
+				logCommandForInitialCommit[5] = initialCommitHash;
 				pb = new ProcessBuilder(logCommandForInitialCommit);
 				pb.directory(repoDirectory);
 				p = pb.start();

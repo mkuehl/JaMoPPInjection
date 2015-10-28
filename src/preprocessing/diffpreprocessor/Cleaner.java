@@ -9,7 +9,7 @@ public class Cleaner {
 	 * Cleans the input from all not necessary meta information. Thus, just information about 
 	 * starting line and number of (affected) lines is retained 
 	 */
-	public static String cleanInput(String input) {
+	public String cleanInput(String input) {
 		if (input != null && !input.isEmpty()) {
 			// first line says, that lines start with one expression within the parenthesis followed by an optional : and a mandatory whitespace
 			String regex = "((From|Date):\\s" //removed Subject from inside parentheses
@@ -38,36 +38,64 @@ public class Cleaner {
 		return input;
 	}
 	
-	public static String cleanDiffFromComments(String diff) {
-//		String[] lines = diff.split("\\n");
-//		StringBuilder result = new StringBuilder();
-//		boolean multiLine = false;
-//		for (String line : lines) {
-//			if (line.contains("/*")) {
-//				multiLine = true;
-//				line = "";
-//			}
-//			if (multiLine) {
-//				if (line.contains("*/")) {
-//					multiLine = false;
-//				}
-//				line = "";
-//			}
-//			if (line.contains("//")) {
-//				line = "";
-//			}
-//			result.append(line + "\n");
-//		}
-//		return result.toString();
-		// remove comments
-		while (diff.contains("/*")) {
-			String temp = "",
-				   temp2 = "";
-			temp = diff.substring(0, diff.indexOf("/*")-1);
-			temp2 = diff.substring(diff.indexOf("*/")+2);
-			diff = temp + temp2;
+	public String cleanDiffFromComments(String diff) {
+		String[] lines = diff.split("\\n");
+		StringBuilder result = new StringBuilder();
+
+		boolean multiLine = false;
+		for (String line : lines) {
+			line = line + "\n";
+			if (line.contains("/*")) {
+				multiLine = true;
+			}
+			if (multiLine) {
+				int start = 0, 
+					end = line.length();
+				boolean startSet = false,
+						endSet = false;
+
+				if (line.contains("*/")) {
+					multiLine = false;
+					end = line.indexOf("*/")+2;
+					endSet = true;
+				}
+				if (line.contains("/*")) {
+					start = line.indexOf("/*")-1;
+					startSet = true;
+				}
+				if (startSet && endSet) {
+					line = line.substring(0, start) + line.substring(end);
+				} else if (endSet) {
+					line = line.substring(end);
+				} else if (startSet) {
+					line = line.substring(0, start);
+				} else {
+					line = "";
+				}
+			} else if (line.contains("//")) {
+				line = line.substring(0, line.indexOf("//"));
+			}
+			
+			result.append(line);
 		}
-		return diff;
+		
+		return result.toString();
+		// remove comments
+//		int originalLength = diff.length();
+//		int currentLength;
+//		String result = diff;
+//		while (result.contains("/*")) {
+//			String temp = "",
+//				   temp2 = "";
+//			temp = result.substring(0, result.indexOf("/*")-1);
+//			temp2 = result.substring(result.indexOf("*/")+2);
+//			result = temp + temp2;
+//			currentLength = result.length();
+//			if (currentLength > originalLength) {
+//				break;
+//			}
+//		}
+//		return result;
 	}
 	
 }

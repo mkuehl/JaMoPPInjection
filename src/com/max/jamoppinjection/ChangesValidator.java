@@ -78,13 +78,16 @@ public class ChangesValidator {
 			
 	private String wrapCodeWithClass(String code, String className ) {
 		String firstPart = "";
+		if (className.equals("GenerationSelector")) {
+			System.out.println();
+		}
 		boolean addClassWord = true;
 		try {
-			if (code.contains("package") && code.contains("class")) {
-				// if it is a later class addition, the code itself is suffiecient.
+			if (code.contains("package") && (code.contains("class") || code.contains("interface "))) {
+				// if it is a later class or interface addition, the code itself is sufficient.
 				addClassWord = false;
 			}
-			if (code.contains("import")) {
+			if (code.contains("import") && addClassWord) {
 				/*
 				 *  firstPart is from the beginning (because the package may not be added) to the 
 				 *  semicolon of the last import statement. code is from the last import semicolon

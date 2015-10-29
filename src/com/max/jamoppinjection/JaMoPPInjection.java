@@ -55,9 +55,6 @@ public class JaMoPPInjection {
 			   deltaFile = null,
 			   splFile = null;
 
-
-		
-
 		log.writeToLog("JaMoPPInjection : Reading config file...");
 
 		try {

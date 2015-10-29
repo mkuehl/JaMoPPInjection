@@ -2,6 +2,7 @@ package com.max.jamoppinjection;
 
 
 import java.io.IOException;
+import java.util.LinkedList;
 
 import logger.Logger;
 
@@ -28,14 +29,13 @@ public class JaMoPPInjection {
 		int i = 0;
 
 		PropertiesReader configReader = new PropertiesReader("config.properties");
-//		boolean withBaseline = true;
-//		try {
-//			withBaseline = Boolean.parseBoolean(configReader.getPropValue("IncludeBaseLine"));
-//		} catch (IOException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-		log = new Logger("E:\\loglog.txt", true);
+		
+		try {
+			log = new Logger(configReader.getPropValue("LogFilePath"), true);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		// Connector to git to clone, extract code base and diffs.
 		GitConnectorCmdL gcl;
 		// cleans the code base and diffs and creates a memory table for knowing lines of methods and fields.
@@ -46,18 +46,14 @@ public class JaMoPPInjection {
 		DeltaJUnit dju = djc.createDeltaJUnit();
 
 		log.writeToLog("JaMoPPInjection : Starting delta transformation...");
-		// TODO adjust headRevision, and paths to your flavor and system.
+		// TODO adjust headRevision, and paths to your flavor and system in config.properties.
 		int headRevision = 8;
-//		// Path to git.exe must end with the git.exe itself!
-//		String gitExePath = "E:\\Program Files (x86)\\Git\\bin\\git.exe",
-//			   targetDirectory = "E:\\programmaticallyCreatedGitRepo\\",
-//			   repoUri = "https://github.com/mkuehl/BankAccountV1.git",
-//			   deltaDirectory = "E:\\DeltaJ-workspace\\PrintClassDelta";
-		
 		String gitExePath = null,
 			   targetDirectory = null,
 			   repoUri = null,
-			   deltaDirectory = null;
+			   deltaDirectory = null,
+			   deltaFile = null,
+			   splFile = null;
 
 
 		
@@ -69,6 +65,8 @@ public class JaMoPPInjection {
 			repoUri = configReader.getPropValue("GitRepoURL");
 			targetDirectory = configReader.getPropValue("RepoPathOnSystem");
 			deltaDirectory = configReader.getPropValue("DeltaDirectory");
+			deltaFile = configReader.getPropValue("DeltaFile");
+			splFile = configReader.getPropValue("SPLFile");
 			headRevision = Integer.parseInt(configReader.getPropValue("StepsBackFromHEADRevision"));
 		} catch (NumberFormatException e) {
 			e.printStackTrace();
@@ -103,11 +101,11 @@ public class JaMoPPInjection {
 			code = "";
 
 			djc.addToDeltaString(d, new ClassChanges(), "");
-			djc.closeDeltaString();
+			djc.closeDeltaString(true);
 		}
-
+//		djc.closeDeltaString(false);
 		// write baseline delta into delta file.
-		djc.write("PrintClassCoreDelta", deltaDirectory);
+		djc.writeDeltas(deltaFile, deltaDirectory, true);
 
 		
 		int diffNo = 0;
@@ -115,9 +113,7 @@ public class JaMoPPInjection {
 		for (int revisionSubtraction = headRevision; revisionSubtraction > 0; revisionSubtraction--) {
 			// get diffs.
 			gcl.executeDiff(targetDirectory, revisionSubtraction, revisionSubtraction-1, "");
-			if (diffNo == 11) {
-				System.out.println();
-			}
+
 			diffPre.setInput(gcl.getDiff());
 			diffPre.separateChanges();
 
@@ -125,10 +121,19 @@ public class JaMoPPInjection {
 			PreprocessedDiff prepDiff = diffPre.getPrepDiff();
 			prepDiff.setToFirst();
 			int size = prepDiff.size();
+			int changesNo = 0;
 					
+			LinkedList<String> hashes = new LinkedList<String>();
 			// iterate over changes found. Start at the last one. Create a delta for each commit.
-			while (prepDiff.hasNext() || diffNo < size) {
+			while (prepDiff.hasNext() || changesNo < size) {
 				Commit changes = prepDiff.getChanges();
+				if (hashes.contains(changes.getCommitHash())) {
+					changesNo++;
+					prepDiff.next();
+					continue;
+				} else {
+					hashes.add(changes.getCommitHash());
+				}
 				Delta tempDelta = djc.createNewDelta(dju, "Delta" + ++diffNo);
 				if (changes.size() > 0) {
 					changes.setToFirst();
@@ -153,22 +158,22 @@ public class JaMoPPInjection {
 
 						}
 						if (c.getChanges() != null) {
-							//						if (c.getChanges().contains("TestInterface1")) {
-							//							System.out.println();
-							//						}
 							djc.addToDeltaString(tempDelta, c, "Hash: " + changes.getCommitHash() 
 									+ "\nCommitMessage:" + changes.getCommitMessage());
 						}
 
 						// interfaces and superclasses have already a semicolon, if the deltastring has one as well, don't close it!
 						if (c.getTypeOfChange().equals(ModificationType.CLASSADDITION)) {
-							djc.closeDeltaString();
+							djc.closeDeltaString(true);
 						}
 					}
-					djc.write("PrintClassCoreDelta", deltaDirectory);
+					djc.closeDeltaString(true);
+					djc.writeDeltas(deltaFile, deltaDirectory, false);
 				} 
+				changesNo++;
 				prepDiff.next();
 			}
 		}
+		djc.writeSPL(splFile, deltaDirectory);
 	}
 }

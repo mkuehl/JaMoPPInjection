@@ -108,6 +108,10 @@ public class DiffAnalyzer {
 				classNode.setParent(packageNode);
 				contained = false;
 			}
+		} else {
+			System.out.println("No Class Found!!!!!!!!!!!");
+			System.out.println();
+			System.out.println(tempDiff);
 		}
 		
 		m = importPattern.matcher(tempDiff);

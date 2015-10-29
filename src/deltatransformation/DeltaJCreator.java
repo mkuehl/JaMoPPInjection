@@ -29,10 +29,12 @@ import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.emftext.language.java.resource.java.util.JavaResourceUtil;
 
+import preprocessing.diffpreprocessor.LineChecker;
 import preprocessing.diffpreprocessor.ModificationType;
 import preprocessing.diffs.ClassChanges;
 
 import com.max.jamoppinjection.ChangesValidator;
+import com.max.jamoppinjection.PropertiesReader;
 
 public class DeltaJCreator {
 
@@ -41,13 +43,22 @@ public class DeltaJCreator {
 	 * create AST nodes.
 	 */
 	private DeltaJFactory factory = DeltaJFactory.eINSTANCE;
+	private SPLCreator splc;
 	
-	private String deltaString = "";
+	private String deltaString;
 
+	private PropertiesReader configReader;
 	private Logger log;
 
 	public DeltaJCreator() {
-		log = new Logger("E:\\loglog.txt", false);
+		configReader = new PropertiesReader("config.properties");
+		try {
+			log = new Logger(configReader.getPropValue("LogFilePath"), false);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		splc = new SPLCreator();
+		deltaString = "";
 	}
 	
 	public DeltaJUnit createDeltaJUnit() {
@@ -137,6 +148,9 @@ public class DeltaJCreator {
 	}
 	
 	private void addJavaModifiesUnit(Delta parent, ModificationType typeOfChange, EObject ast) {
+		if (typeOfChange == null || ast == null || parent == null) {
+			return;
+		}
 		ModifiesTypeExaminer mte = new ModifiesTypeExaminer();
 		ModifiesUnit mu = factory.createModifiesUnit();
 		// represents the ModifiesType. Can be ModifiesAction but ModifiesImport, ModifiesInterface, ... as well.
@@ -159,11 +173,6 @@ public class DeltaJCreator {
 			parent.getDeltaActions().add(mu);
 		}
 	}
-	
-	/*
-	 *  TODO create methods for modification and removal of elements. Works entirely different than AddsUnit, because
-	 *  no unit is set but smaller actions for modifications have to be set. Do not know yet, how to apply removals!!
-	 */
 	
 	private JavaCompilationUnit fancyJamoppToDeltaJTransformation(EObject jamoppAST) {
 
@@ -212,6 +221,8 @@ public class DeltaJCreator {
 			}
 			delta.append("*/\n");
 			delta.append("delta " + d.getName() + " {\n\t");
+			// must have same length. Same index must correspond to delta with corresponding feature.
+			splc.addDelta(d.getName());
 		} 
 
 		MemberSeparator ms = new MemberSeparator();
@@ -266,21 +277,41 @@ public class DeltaJCreator {
 			} 
 		}
 
-		String testForEmpty = delta.toString().trim().replaceAll("(adds|removes|modifies|\\s)", "");
-		if (testForEmpty.length() > 0) {
-			deltaString += delta.toString();
+		if (deltaString.contains(delta.toString())) {
+			return;
 		}
-
+		
+		String testForEmpty = delta.toString().replaceAll("(adds\\}|removes\\}|modifies\\})", "");
+		delta = new StringBuilder(testForEmpty);
+		testForEmpty = delta.toString().replace("modifies " + c.getQualifiedClassName() + " {\n\t", "");
+		testForEmpty = testForEmpty.replaceAll("(adds|removes|modifies|\\s|\\{|\\})", "").trim();
+		if (testForEmpty.length() > 1) {
+			if (!deltaString.contains(delta.toString())) {
+				deltaString += delta.toString();
+			}
+		}		
 		log.writeToLog(this.getClass().toString() + " : " + log.getSuccessMessage() + ".");
 	}
 
 	/**
 	 * Adds a curly closing bracket to the internal string representation of the delta.
 	 * May be neccessary in some cases.
+	 * @param deltaAction - if only deltaAction shall be closed.
 	 */
-	public void closeDeltaString() {
+	public void closeDeltaString(boolean deltaAction) {
+		LineChecker lc = new LineChecker();
+		int openingBrackets = 0,
+			closingBrackets = 0;
 		if (deltaString.length() > 0) {
-			deltaString += "}\n";
+
+			openingBrackets = lc.countNumberOfOccurencesInString(deltaString, "{");
+			closingBrackets = lc.countNumberOfOccurencesInString(deltaString, "}");
+			// if deltaAction shall be closed, subtract 1 from opening count, because delta must remain open.
+			while (closingBrackets < openingBrackets - (deltaAction ? 1 : 0)) {
+				deltaString += "}\n";
+				closingBrackets++;
+			}
+			
 		}
 	}
 	
@@ -293,11 +324,15 @@ public class DeltaJCreator {
 	 * @param name - name of file
 	 * @param path - path to file, may not contain file.
 	 */
-	public void write(String name, String path) {
+	public void writeDeltas(String name, String path, boolean createNewFile) {
 
+		if (createNewFile) {
+			new File(path + "\\" + name).delete();	
+		}
+		
 		log.writeToLog(this.getClass().toString() + " : Writing delta to delta-file...");
 		try {
-			File f = new File(path + "\\" + name + ".deltaj");
+			File f = new File(path + "\\" + name);
 			// without getParentFile() the path is created with the designated file as directory.
 			f.getParentFile().mkdirs();
 			
@@ -319,4 +354,14 @@ public class DeltaJCreator {
 		log.writeToLog(this.getClass().toString() + " : " + log.getSuccessMessage() + ".");
 	}
 
+	/**
+	 * Method for writing previously computed SPL-file. Deletes possibly existing file.
+	 * @param name - name of file
+	 * @param path - path to file, may not contain file.
+	 */
+	public void writeSPL(String name, String path) {
+		new File(path + "\\" + name).delete();
+		File f = new File(path + "\\" + name);
+		splc.createSPLFile(f);
+	}
 }

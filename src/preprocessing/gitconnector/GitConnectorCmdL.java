@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.util.Scanner;
 
+import com.max.jamoppinjection.PropertiesReader;
+
 import logger.Logger;
 
 public class GitConnectorCmdL {
@@ -12,6 +14,7 @@ public class GitConnectorCmdL {
 	private String gitExePath;
 	private StringBuilder diff;
 	private StringBuilder codeBase;
+	private PropertiesReader configReader;
 	private Logger log;
 
 	/**
@@ -26,7 +29,13 @@ public class GitConnectorCmdL {
 	 */
 	public GitConnectorCmdL(String pathToGitExe, String usrnam, String pwd) {
 		gitExePath = pathToGitExe;
-		log = new Logger("E:\\loglog.txt", false);
+		configReader = new PropertiesReader("config.properties");
+		try {
+			log = new Logger(configReader.getPropValue("LogFilePath"), false);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
 
 	/**
@@ -170,8 +179,18 @@ public class GitConnectorCmdL {
 			@SuppressWarnings("resource")
 			Scanner s = new Scanner(p.getInputStream());
 			diff = new StringBuilder("");
+//			boolean addPublic = false;
 			while(s.hasNextLine()) {
-				diff.append(s.nextLine() + "\n");
+				String t = s.nextLine();
+//				if (t.trim().equals("public")) {
+//					addPublic = true;
+//				} else {
+//					if (t.contains("class") && !t.contains("public") && addPublic) {
+//						t = "public " + t;
+//						addPublic = false;
+//					}
+					diff.append(t + "\n");
+//				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

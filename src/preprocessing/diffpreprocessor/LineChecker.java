@@ -69,6 +69,9 @@ public class LineChecker {
 	}
 	
 	public String getSuperclassFromLineArray(String[] addedParts) {
+		if (addedParts.length < 2) {
+			return ""; 
+		}
 		String superclass = "";
 		for (int i = 0; i < addedParts.length; i++) {
 			if (addedParts[i].equals("")) {
@@ -147,9 +150,15 @@ public class LineChecker {
 		return false;
 	}
 	
-	
-	public int countNumberOfOccurencesInString(String line, String searchingFor) {
-		String tempLine = line;
+	/**
+	 * Counts the number of occurrences in a string. Iterates over the string and cuts the string to search 
+	 * at the last position a searchingFor was found. 
+	 * @param text
+	 * @param searchingFor
+	 * @return
+	 */
+	public int countNumberOfOccurencesInString(String text, String searchingFor) {
+		String tempLine = text;
 		int indexOfLastOccurence = 0,
 			occurenceCount = 0;
 		while (indexOfLastOccurence != -1) {

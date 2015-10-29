@@ -38,22 +38,29 @@ public class Cleaner {
 		return input;
 	}
 	
+	/**
+	 * Searches the given string line for line. Splits the string first at linebreaks (\n).
+	 * @param diff
+	 * @return
+	 */
 	public String cleanDiffFromComments(String diff) {
 		String[] lines = diff.split("\\n");
 		StringBuilder result = new StringBuilder();
 
 		boolean multiLine = false;
 		for (String line : lines) {
-			line = line + "\n";
+			// if multiline comment is found.
 			if (line.contains("/*")) {
 				multiLine = true;
 			}
+			
 			if (multiLine) {
 				int start = 0, 
 					end = line.length();
 				boolean startSet = false,
 						endSet = false;
 
+				// end is important to not remove parts of the line that are not commented out.
 				if (line.contains("*/")) {
 					multiLine = false;
 					end = line.indexOf("*/")+2;
@@ -71,31 +78,27 @@ public class Cleaner {
 					line = line.substring(0, start);
 				} else {
 					line = "";
+					continue;
+				}
+
+				// if line contained only comment, remove. 
+				if (line.trim().equals("-") || line.trim().equals("+") || line.equals("")) {
+					line = "";
+					continue;
 				}
 			} else if (line.contains("//")) {
 				line = line.substring(0, line.indexOf("//"));
+				// if line contained only comment, remove. 
+				if (line.trim().equals("-") || line.trim().equals("+")) {
+					line = "";
+					continue;
+				}
 			}
 			
-			result.append(line);
+			result.append(line + "\n");
 		}
 		
 		return result.toString();
-		// remove comments
-//		int originalLength = diff.length();
-//		int currentLength;
-//		String result = diff;
-//		while (result.contains("/*")) {
-//			String temp = "",
-//				   temp2 = "";
-//			temp = result.substring(0, result.indexOf("/*")-1);
-//			temp2 = result.substring(result.indexOf("*/")+2);
-//			result = temp + temp2;
-//			currentLength = result.length();
-//			if (currentLength > originalLength) {
-//				break;
-//			}
-//		}
-//		return result;
 	}
 	
 }

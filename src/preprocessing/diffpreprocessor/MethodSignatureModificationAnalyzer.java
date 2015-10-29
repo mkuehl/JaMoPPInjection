@@ -42,7 +42,7 @@ public class MethodSignatureModificationAnalyzer {
 		if (m.find()) {
 			// method signatures may not contain the equals-sign or new keyword.
 //			String s = m.group();
-			if (!m.group().contains("=") && !m.group().contains("new")) {
+			if (!m.group().contains("=") && !m.group().contains("new") && !m.group().contains(";")) {
 				return true;
 			}
 			return false;

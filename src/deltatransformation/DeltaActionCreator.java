@@ -48,69 +48,88 @@ public class DeltaActionCreator {
 					ma instanceof RemovesSuperclass) {
 				// if superclass is not removed, further instructions are needed.
 				if (!affectedMembers.toString().contains("removes superclass")) {
-					String t = s.replaceAll("(public|protected|private|static|final)", "");
-					String memberName = "";
-					int startindex = 0;
-					String memberRegex = "[a-zA-Z0-9_]+[\\s]+[a-zA-Z0-9_]+[\\s]*(\\(|=|;)";
-					Pattern memberPattern = Pattern.compile(memberRegex);
-					Matcher memberMatcher = memberPattern.matcher(t);
-					
-					//					// return type (can be qualified), method name
-					//					String regex = "(\\w|\\d|_)+\\.?(\\w|\\d|_|\\.){0,50}(\\w|\\d|_)+[\\s]+(\\w|_|.){1,50}(\\w|_)[\\s]+"
-					//							// a (, arbitrary number of parameters and last a )
-					//							+ "\\(((\\w|_|.){1,50}(\\w|_),)*(\\w|_|.){1,50}(\\w|_)\\)";
-
-
-					t = t.trim();
-					String[] memberParts = t.split("\\(|\\)|,");
-//					affectedMembers.append(" " + memberParts[3]);
-					if (memberMatcher.find()) {
-						memberName = memberMatcher.group();
-						// if not a method.
-						if (!memberName.endsWith("(")) {
-							memberName = memberName.trim().substring(memberName.trim().indexOf(" "), memberName.length()-1).trim();
-						} else {
-							memberName = memberName.trim().substring(memberName.trim().indexOf(" ")).trim();
-						}
-						affectedMembers.append(" " + memberName);
-						if (memberName.trim().endsWith("(")) {
-							memberName = memberName.replace("(", "").trim();
-						}
-						for (int j = 0; j < memberParts.length; j++) {
-							if (memberParts[j].contains(memberName)) {
-								startindex = j;
-								break;
+					if (ma instanceof RemovesField && s.contains(",")) {
+						String[] t = s.split(",");
+						String type;
+						String memberRegex = "[a-zA-Z0-9_]+[\\s]+[a-zA-Z0-9_]+[\\s]*(\\(|=|;)";
+						Pattern memberPattern = Pattern.compile(memberRegex);
+						// t[0] contains type.
+						Matcher memberMatcher = memberPattern.matcher(t[0]);
+						memberMatcher.find();
+						type = memberMatcher.group().trim();
+						type = type.substring(0, type.indexOf(" ")).trim();
+						for (String tt : t) {
+							tt = tt.trim();
+							if (!affectedMembers.toString().endsWith("removes")) {
+								affectedMembers.append("removes");
 							}
+							affectedMembers.append(" " + tt + "\n");
 						}
 					} else {
-						// no signature found.
-						break;
-					}
-					
-					// iterates through parameters, adding only datatypes and stopping by hitting "{"
-					for (int i = startindex; i < memberParts.length; i++) {
-						// if opening curly brackets or equals are found, the name is already extracted.
-						if (memberParts[i].contains("{") || memberParts[i].contains("=")) {
+						String t = s.replaceAll("(public|protected|private|static|final)", "");
+						String memberName = "";
+						int startindex = 0;
+						String memberRegex = "[a-zA-Z0-9_]+[\\s]+[a-zA-Z0-9_]+[\\s]*(\\(|=|;)";
+						Pattern memberPattern = Pattern.compile(memberRegex);
+						Matcher memberMatcher = memberPattern.matcher(t);
+						
+						//					// return type (can be qualified), method name
+						//					String regex = "(\\w|\\d|_)+\\.?(\\w|\\d|_|\\.){0,50}(\\w|\\d|_)+[\\s]+(\\w|_|.){1,50}(\\w|_)[\\s]+"
+						//							// a (, arbitrary number of parameters and last a )
+						//							+ "\\(((\\w|_|.){1,50}(\\w|_),)*(\\w|_|.){1,50}(\\w|_)\\)";
+	
+	
+						t = t.trim();
+						String[] memberParts = t.split("\\(|\\)|,");
+	//					affectedMembers.append(" " + memberParts[3]);
+						if (memberMatcher.find()) {
+							memberName = memberMatcher.group();
+							// if not a method.
+							if (!memberName.endsWith("(")) {
+								memberName = memberName.trim().substring(memberName.trim().indexOf(" "), memberName.length()-1).trim();
+							} else {
+								memberName = memberName.trim().substring(memberName.trim().indexOf(" ")).trim();
+							}
+							affectedMembers.append(" " + memberName);
+							if (memberName.trim().endsWith("(")) {
+								memberName = memberName.replace("(", "").trim();
+							}
+							for (int j = 0; j < memberParts.length; j++) {
+								if (memberParts[j].contains(memberName)) {
+									startindex = j;
+									break;
+								}
+							}
+						} else {
+							// no signature found.
 							break;
 						}
-						if (memberParts[i].contains(",") || memberParts[i].endsWith(")") || 
-								memberParts[i].equals("") || memberParts[i].contains(memberName)) {
-							continue;
-						} 
-						affectedMembers.append(memberParts[i] + " ");
-					}
-					if (!affectedMembers.toString().endsWith(";")) {
-						openingBrackets += lc.countNumberOfOccurencesInString(affectedMembers.toString(), "(");
-						closingBrackets += lc.countNumberOfOccurencesInString(affectedMembers.toString(), ")");
-						while (closingBrackets < openingBrackets) {
-							affectedMembers.append(")");
-							closingBrackets++;
+						
+						// iterates through parameters, adding only datatypes and stopping by hitting "{"
+						for (int i = startindex; i < memberParts.length; i++) {
+							// if opening curly brackets or equals are found, the name is already extracted.
+							if (memberParts[i].contains("{") || memberParts[i].contains("=")) {
+								break;
+							}
+							if (memberParts[i].contains(",") || memberParts[i].endsWith(")") || 
+									memberParts[i].equals("") || memberParts[i].contains(memberName)) {
+								continue;
+							} 
+							affectedMembers.append(memberParts[i] + " ");
 						}
-					}
-					if (!affectedMembers.toString().endsWith(";")) {
-						affectedMembers.append(";\n");
-					} else {
-						affectedMembers.append("\n");
+						if (!affectedMembers.toString().endsWith(";")) {
+							openingBrackets += lc.countNumberOfOccurencesInString(affectedMembers.toString(), "(");
+							closingBrackets += lc.countNumberOfOccurencesInString(affectedMembers.toString(), ")");
+							while (closingBrackets < openingBrackets) {
+								affectedMembers.append(")");
+								closingBrackets++;
+							}
+						}
+						if (!affectedMembers.toString().endsWith(";")) {
+							affectedMembers.append(";\n");
+						} else {
+							affectedMembers.append("\n");
+						}
 					}
 				} else {
 //					affectedMembers.append(" removes superclass;\n");
@@ -160,11 +179,13 @@ public class DeltaActionCreator {
 				}
 				openingBrackets += lc.countNumberOfOccurencesInString(affectedMembers.toString(), "{");
 				closingBrackets += lc.countNumberOfOccurencesInString(affectedMembers.toString(), "}");
-				while (closingBrackets < openingBrackets) {
-					affectedMembers.append("}");
-					closingBrackets++;
-				}
+
 				affectedMembers.append("\n");
+			}
+
+			while (closingBrackets < openingBrackets) {
+				affectedMembers.append("}");
+				closingBrackets++;
 			}
 		}
 		return affectedMembers.toString();

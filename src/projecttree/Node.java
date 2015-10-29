@@ -123,6 +123,9 @@ public class Node {
 	 * @param child
 	 */
 	public void removeChild(Node child) {
+		if (child == null) {
+			return;
+		}
 		if (children.contains(child)) {
 			children.remove(child);
 			if (child.getType().equals(NodeType.METHOD) || child.getType().equals(NodeType.FIELD)) {

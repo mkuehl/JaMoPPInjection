@@ -137,4 +137,18 @@ public class Commit implements Iterable<ClassChanges>, Iterator<ClassChanges> {
 		}
 		return false;
 	}
+	
+	public boolean contains(ClassChanges c) {
+		if (c == null) {
+			return false;
+		}
+		if (!changesList.isEmpty()) {
+			for (ClassChanges cc : changesList) {
+				if (c.equals(cc)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 }

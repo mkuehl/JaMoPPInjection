@@ -1,4 +1,4 @@
-Setup of eclipse and workspace
+# Setup of eclipse and workspace
 
 Attention: Tested on Windows 7 64-bit Professional and Windows 10 64-bit Professional with Java jdk version 1.8.0_65.
 
@@ -12,24 +12,25 @@ Attention: Tested on Windows 7 64-bit Professional and Windows 10 64-bit Profess
 8. Change config.properties file to your system flavour (see Change config.properties).
 9. Start delta transformation (see Delta Transformation).
 
-Installing JaMoPP
+## Installing JaMoPP
 
 1. Within opened Eclipse click on "Help"->"Install New Software...".
 2. In textfield "Work with:" copy and paste the following (without "): "JaMoPP - http://jamopp.org/update".
 3. In the list of items choose all from the following categories: 
-	i. EMFText
-	ii. EMFText Deprecated Features
-	iii. EMFText Languages
-	iv. JaMoPP (Java Model Parser and Printer)
-	v. JaMoPP Applications
-	vi. Language Components
-	(it might be enough to install i. and iv., but I installed all of them)
+  1. EMFText
+  2. EMFText Deprecated Features
+  3. EMFText Languages
+  4. JaMoPP (Java Model Parser and Printer)
+  5. JaMoPP Applications
+  6. Language Components
+  
+   (it might be enough to install i. and iv., but I installed all of them)
 4. Click "Next" 2 times.
 5. Accept License Agreement and click "Finish".
 6. After installation JaMoPP should be ready for usage.
 
 
-Installing DeltaJ
+## Installing DeltaJ
 
 1. Within opened Eclipse click on "Help"->"Install New Software...".
 2. In textfield "Work with:" copy and paste the following (without "): DeltaJ - https://www.isf.cs.tu-bs.de/cms/research/deltas/downloads/plug-in/
@@ -45,20 +46,20 @@ Change Eclipse-workspace
 2. Ready
 
 
-Change config.properties
+## Change config.properties
 
 1. In the JaMoPPInjection folder, open "config.properties" file (e.g. with Notepad++).
 2. Change paths to your system. The following keywords where used:
-	i. GitExePath: Path to git exe including the exe (for Windows). For Mac and Linux the respective git paths have to be used, it's not sure that it works on those systems.
-	ii. GitRepoURL: The git project you want to process (this is for cloning).
-	iii. RepoPathOnSystem: Path where git repo should be cloned to (e.g. C:\\RepoToBeTransformed\\).
-	iv. DeltaDirectory: Directory for delta- and SPL-file (e.g. C:\\DeltaDirectory).
-	v. DeltaFile: Name of delta-file with file type (e.g. example.deltaj).
-	vi. SPLFile: Name of SPL-file with file type (e.g. example.spl).
-	vii. StepsBackFromHEADRevision: The number of steps taken back from HEAD revision (e.g. 5).
-	ix. LogFilePath: Path to log-file (e.g. C:\\deltatransformationlog.txt, or without ending for Linux/Mac).
+  1. GitExePath: Path to git exe including the exe (for Windows). For Mac and Linux the respective git paths have to be used, it's not sure that it works on those systems.
+  2. GitRepoURL: The git project you want to process (this is for cloning).
+  3. RepoPathOnSystem: Path where git repo should be cloned to (e.g. C:\\RepoToBeTransformed\\).
+  4. DeltaDirectory: Directory for delta- and SPL-file (e.g. C:\\DeltaDirectory).
+  5. DeltaFile: Name of delta-file with file type (e.g. example.deltaj).
+  6. SPLFile: Name of SPL-file with file type (e.g. example.spl).
+  7. StepsBackFromHEADRevision: The number of steps taken back from HEAD revision (e.g. 5).
+  8. LogFilePath: Path to log-file (e.g. C:\\deltatransformationlog.txt, or without ending for Linux/Mac).
 	
-Start Delta Transformation
+## Start Delta Transformation
 
 1. Click on "Run As.."->"Eclipse Application". "Run As" can be found in the context menu by right-clicking the project name in the package explorer.
 2. A new Eclipse instance starts.

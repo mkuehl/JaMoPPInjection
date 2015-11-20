@@ -1,0 +1,7 @@
+IdentifyQClassNamePackageRegex=(package\\s([a-zA-Z0-9_]+[\\.]?)+;)
+IdentifyPackageRegex=package[\\s]{1,5}[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*
+IdentifyClassRegex=(public|protected|private)?[\\s]{0,5}class[\\s]{1,5}[a-zA-Z0-9_]+
+IdentifyImportstatementRegex=import[\\s]{1,5}[a-zA-Z0-9_]+(\\.([a-zA-Z0-9_]+|\\*))+;
+IdentifyMethodRegex=(public|protected|private)?[\\s]{1,5}[a-zA-Z0-9_]+[\\s]{1,5}[a-zA-Z0-9_]+\\s?\\(
+IdentifyParameterRegex=(\\s)*[a-zA-Z0-9_]+(\\s)*[a-zA-Z0-9_]+(\\s)*(,)?
+IdentifyFieldRegex=(?!\\breturn\\b)(public|protected|private)?[\\s]{1,5}(?!\\bnull;\\b)([a-zA-Z0-9_]+)[\\s]{1,5}[a-zA-Z0-9_]+\\s?(;|=)
